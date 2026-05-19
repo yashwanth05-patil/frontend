@@ -2,7 +2,7 @@ export const Config = {
   baseUrl: "https://woman-safety-app.onrender.com/api/user",
   SignUPUrl: "https://woman-safety-app.onrender.com/api/user/signup",
   LOGINUrl: "https://woman-safety-app.onrender.com/api/user/login",
-  GoogleClientId: "748627875694-hqpvo0akdcvtgjpvqluoap2dm3bafbia.apps.googleusercontent.com",
+  GoogleClientId: "956277947005-1tmk0grf6u907g8ijhkdl9mia61doitv.apps.googleusercontent.com",
   GoogleSignUpUrl: "https://woman-safety-app.onrender.com/api/user/googleLogin",
   LogoutUrl: "https://woman-safety-app.onrender.com/api/user/logout",
   ContactUrl: "https://woman-safety-app.onrender.com/api/contacts/addcontact",
