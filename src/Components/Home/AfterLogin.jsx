@@ -116,6 +116,7 @@ function AfterLogin() {
       const response = await api.post(Config.EMERGENCYUrl, {
         contacts: contactsdata,
         contactNumbers: contactsdata.map((c) => c.MobileNo),
+        senderName: user?.username || "Someone",
         location: {
           latitude: location.latitude,
           longitude: location.longitude,
