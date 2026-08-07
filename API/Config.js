@@ -15,5 +15,7 @@ export const Config = {
   ADDPROFILEPHOTO: "https://backend-0f8w.onrender.com/api/profile/add-photo",
   UPDATEUSERNAME: "https://backend-0f8w.onrender.com/api/profile/update-name",
   UPDATEEMAIL: "https://backend-0f8w.onrender.com/api/profile/update-email",
-  UPDATEPASSWORD: "https://backend-0f8w.onrender.com/api/profile/update-password"
+  UPDATEPASSWORD: "https://backend-0f8w.onrender.com/api/profile/update-password",
+  UPLOADEVIDENCEUrl: "https://backend-0f8w.onrender.com/api/contacts/upload-evidence",
+  SENDEVIDENCEUrl: "https://backend-0f8w.onrender.com/api/contacts/send-evidence"
 }

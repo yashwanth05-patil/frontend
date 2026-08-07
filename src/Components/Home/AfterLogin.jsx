@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import SOSButton from '../SOSButton';
-import { Plus, X, CircleX } from 'lucide-react';
+import { Plus, X, CircleX, Mic, MicOff, Video, StopCircle } from 'lucide-react';
 import BottomNav from './BottomNav';
 import { useForm } from 'react-hook-form';
 import { AuthContext } from '../../Context/AuthContext';
@@ -8,6 +8,8 @@ import api from '../../../API/CustomApi';
 import { Config } from '../../../API/Config';
 import Loader from './Loader';
 import { toast } from "react-toastify"
+import { useSOSRecorder } from './useSOSRecorder';
+import { useVoiceActivation } from './useVoiceActivation';
 
 function AfterLogin() {
   const [showAddContact, setShowAddContact] = useState(false);
@@ -16,6 +18,34 @@ function AfterLogin() {
   const [contactsdata, setContactsdata] = useState([]);
   const [showLoader, setShowLoader] = useState(false);
   const [locationError, setLocationError] = useState(null);
+
+  const { status: recordingStatus, startRecording, stopRecording, maxDurationMs } = useSOSRecorder();
+
+  const sendEvidenceLink = async (evidenceUrl) => {
+    if (!evidenceUrl || !contactsdata || contactsdata.length === 0) return;
+    try {
+      await api.post(Config.SENDEVIDENCEUrl, {
+        contacts: contactsdata,
+        evidenceUrl,
+        senderName: user?.username || 'Someone',
+      });
+      toast.success('📹 Evidence clip sent to your contacts!');
+    } catch (error) {
+      console.error('Error sending evidence link:', error);
+      toast.error('Alert sent, but evidence link failed to email');
+    }
+  };
+
+  const {
+    isSupported: voiceSupported,
+    isListening: voiceListening,
+    micError: voiceError,
+    startListening: startVoiceActivation,
+    stopListening: stopVoiceActivation,
+  } = useVoiceActivation(() => {
+    toast.info('🎙️ Wake phrase detected — triggering SOS');
+    handleSOS();
+  });
 
   useEffect(() => {
     setContactsdata(Array.isArray(user?.contacts) ? user.contacts : []);
@@ -116,6 +146,7 @@ function AfterLogin() {
       const response = await api.post(Config.EMERGENCYUrl, {
         contacts: contactsdata,
         contactNumbers: contactsdata.map((c) => c.MobileNo),
+        senderName: user?.username || "Someone",
         location: {
           latitude: location.latitude,
           longitude: location.longitude,
@@ -123,6 +154,18 @@ function AfterLogin() {
       });
 
       toast.success('🚨 Emergency alerts sent to all contacts!');
+
+      // Location alert is already out. Now start recording audio/video
+      // evidence in the background - this does not block or delay the
+      // alert above, since speed on the initial alert matters most.
+      toast.info('🔴 Recording evidence clip in the background…');
+      startRecording(user?._id).then((evidenceUrl) => {
+        if (evidenceUrl) {
+          sendEvidenceLink(evidenceUrl);
+        } else {
+          toast.warn('Could not record evidence (camera/mic unavailable)');
+        }
+      });
     } catch (error) {
       console.error('SOS Error:', error);
       setLocationError(error.message);
@@ -140,9 +183,50 @@ function AfterLogin() {
         </div>
       )}
 
+      <div className="w-full flex items-center justify-center gap-3 pt-3">
+        <button
+          onClick={voiceListening ? stopVoiceActivation : startVoiceActivation}
+          disabled={!voiceSupported}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-colors
+            ${voiceListening ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300'}
+            ${!voiceSupported ? 'opacity-40 cursor-not-allowed' : 'hover:border-red-400'}`}
+          title={voiceSupported ? 'Toggle hands-free voice activation' : 'Not supported in this browser'}
+        >
+          {voiceListening ? <Mic className="w-4 h-4 animate-pulse" /> : <MicOff className="w-4 h-4" />}
+          {voiceListening ? 'Listening for "help me"…' : 'Voice Activation'}
+        </button>
+      </div>
+      {!voiceSupported && (
+        <p className="text-center text-xs text-gray-400 mt-1">
+          Voice activation needs Chrome/Edge on Android or desktop — not supported in this browser.
+        </p>
+      )}
+      {voiceError && (
+        <p className="text-center text-xs text-red-500 mt-1">{voiceError}</p>
+      )}
+
       <div className="w-full h-[40vh] p-2 flex items-center justify-center" onClick={handleSOS}>
         <SOSButton />
       </div>
+
+      {recordingStatus === 'recording' && (
+        <div className="w-full flex flex-col items-center gap-2 -mt-4 mb-4">
+          <div className="flex items-center gap-2 text-red-600 text-sm font-semibold">
+            <Video className="w-4 h-4 animate-pulse" />
+            Recording evidence (auto-stops in {Math.round(maxDurationMs / 1000)}s)…
+          </div>
+          <button
+            onClick={stopRecording}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-red-300 text-red-600 hover:bg-red-50"
+          >
+            <StopCircle className="w-4 h-4" />
+            Stop &amp; send now
+          </button>
+        </div>
+      )}
+      {recordingStatus === 'uploading' && (
+        <p className="text-center text-sm text-gray-500 -mt-4 mb-4">Uploading evidence clip…</p>
+      )}
 
       <div className="w-full p-4">
         <h1 className="text-gray-900 text-xl font-bold md:text-2xl">Emergency Contacts</h1>
