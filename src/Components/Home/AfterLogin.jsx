@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState } from 'react';
-import SOSButton from '../SOSButton';
-import { Plus, X, CircleX, Mic, MicOff, Video, StopCircle } from 'lucide-react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import GuardianDial from '../GuardianDial';
+import { Plus, X, Mic, MicOff, StopCircle } from 'lucide-react';
 import BottomNav from './BottomNav';
 import { useForm } from 'react-hook-form';
 import { AuthContext } from '../../Context/AuthContext';
@@ -11,45 +11,104 @@ import { toast } from "react-toastify"
 import { useSOSRecorder } from './useSOSRecorder';
 import { useVoiceActivation } from './useVoiceActivation';
 
+function formatClock(date) {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 function AfterLogin() {
   const [showAddContact, setShowAddContact] = useState(false);
-  const { handleSubmit, register } = useForm();
+  const [selectedContact, setSelectedContact] = useState(null);
+  const { handleSubmit, register, reset } = useForm();
   const { user, setUser } = useContext(AuthContext);
   const [contactsdata, setContactsdata] = useState([]);
   const [showLoader, setShowLoader] = useState(false);
   const [locationError, setLocationError] = useState(null);
+  const [accuracyM, setAccuracyM] = useState(null);
+  const [clock, setClock] = useState(() => formatClock(new Date()));
+  const [alertActive, setAlertActive] = useState(false);
 
   const { status: recordingStatus, startRecording, stopRecording, maxDurationMs } = useSOSRecorder();
 
   const sendEvidenceLink = async (evidenceUrl) => {
     if (!evidenceUrl || !contactsdata || contactsdata.length === 0) return;
     try {
-      await api.post(Config.SENDEVIDENCEUrl, {
+      const { data } = await api.post(Config.SENDEVIDENCEUrl, {
         contacts: contactsdata,
         evidenceUrl,
         senderName: user?.username || 'Someone',
       });
-      toast.success('📹 Evidence clip sent to your contacts!');
+
+      const results = data?.emailResults || [];
+      const failures = results.filter((r) => r.status === 'failed');
+
+      if (results.length === 0) {
+        toast.warn('No contact has an email on file, so no evidence link was sent');
+      } else if (failures.length === results.length) {
+        console.error('Evidence email failures:', failures);
+        toast.error('Evidence link failed to send — check backend logs for the reason');
+      } else if (failures.length > 0) {
+        console.error('Some evidence email failures:', failures);
+        toast.warn(`Evidence link sent to ${results.length - failures.length}/${results.length} contacts`);
+      } else {
+        toast.success('Evidence clip sent to your Trusted Circle');
+      }
     } catch (error) {
       console.error('Error sending evidence link:', error);
-      toast.error('Alert sent, but evidence link failed to email');
+      toast.error('Alert sent, but the evidence link could not be emailed');
     }
   };
 
   const {
     isSupported: voiceSupported,
     isListening: voiceListening,
+    stage: voiceStage,
     micError: voiceError,
     startListening: startVoiceActivation,
     stopListening: stopVoiceActivation,
+    wasEnabledBefore,
   } = useVoiceActivation(() => {
-    toast.info('🎙️ Wake phrase detected — triggering SOS');
+    toast.info('Voice command heard — sending alert');
     handleSOS();
   });
 
   useEffect(() => {
+    if (wasEnabledBefore && voiceSupported) {
+      startVoiceActivation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     setContactsdata(Array.isArray(user?.contacts) ? user.contacts : []);
   }, [user]);
+
+  useEffect(() => {
+    const id = setInterval(() => setClock(formatClock(new Date())), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return undefined;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (position.coords.accuracy) {
+          setAccuracyM(Math.round(position.coords.accuracy));
+        }
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (recordingStatus === 'idle' || recordingStatus === 'done' || recordingStatus === 'error') {
+      const timer = setTimeout(() => setAlertActive(false), recordingStatus === 'idle' ? 0 : 1800);
+      return () => clearTimeout(timer);
+    }
+    if (recordingStatus === 'recording' || recordingStatus === 'uploading') {
+      setAlertActive(true);
+    }
+  }, [recordingStatus]);
 
   const Submit = async (formData) => {
     setShowLoader(true);
@@ -74,11 +133,12 @@ function AfterLogin() {
           contacts: [...(prevUser.contacts || []), newContact],
         }));
         setShowAddContact(false);
-        toast.success('Contact added successfully!');
+        reset();
+        toast.success('Added to your Trusted Circle');
       }
     } catch (error) {
       console.error('Error adding contact:', error);
-      toast.error('Failed to add contact');
+      toast.error('Could not add this person. Try again.');
     } finally {
       setShowLoader(false);
     }
@@ -99,11 +159,12 @@ function AfterLogin() {
           ...prevUser,
           contacts: prevUser.contacts.filter((c) => c._id !== contactId),
         }));
-        toast.success('Contact deleted!');
+        setSelectedContact(null);
+        toast.success('Removed from your Trusted Circle');
       }
     } catch (error) {
       console.error('Error deleting contact:', error);
-      toast.error('Failed to delete contact');
+      toast.error('Could not remove this person. Try again.');
     } finally {
       setShowLoader(false);
     }
@@ -118,6 +179,9 @@ function AfterLogin() {
             timeout: 10000,
           });
         });
+        if (position.coords.accuracy) {
+          setAccuracyM(Math.round(position.coords.accuracy));
+        }
         return {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -133,17 +197,17 @@ function AfterLogin() {
   };
 
   const handleSOS = async () => {
-    setShowLoader(true);
     setLocationError(null);
+    setAlertActive(true);
 
     try {
       if (!contactsdata || contactsdata.length === 0) {
-        throw new Error('No emergency contacts available');
+        throw new Error('Add someone to your Trusted Circle before sending an alert');
       }
 
       const location = await getLocation();
 
-      const response = await api.post(Config.EMERGENCYUrl, {
+      await api.post(Config.EMERGENCYUrl, {
         contacts: contactsdata,
         contactNumbers: contactsdata.map((c) => c.MobileNo),
         senderName: user?.username || "Someone",
@@ -153,210 +217,237 @@ function AfterLogin() {
         },
       });
 
-      toast.success('🚨 Emergency alerts sent to all contacts!');
+      toast.success('Alert sent to your Trusted Circle');
 
-      // Location alert is already out. Now start recording audio/video
-      // evidence in the background - this does not block or delay the
-      // alert above, since speed on the initial alert matters most.
-      toast.info('🔴 Recording evidence clip in the background…');
+      toast.info('Recording an evidence clip in the background');
       startRecording(user?._id).then((evidenceUrl) => {
         if (evidenceUrl) {
           sendEvidenceLink(evidenceUrl);
         } else {
-          toast.warn('Could not record evidence (camera/mic unavailable)');
+          toast.warn('Could not record evidence — camera or microphone is unavailable');
         }
       });
     } catch (error) {
       console.error('SOS Error:', error);
-      setLocationError(error.message);
-      toast.error('Emergency alert failed: ' + error.message);
-    } finally {
-      setShowLoader(false);
+      setAlertActive(false);
+      const message = error.message || 'Emergency alert could not be sent';
+      if (message.toLowerCase().includes('location') || message.toLowerCase().includes('geolocation')) {
+        setLocationError('Location permission is off. Turn it on in Settings to send your position.');
+      } else {
+        setLocationError(message);
+      }
+      toast.error(message);
     }
   };
 
+  const ringState = useMemo(() => {
+    if (alertActive || recordingStatus === 'recording' || recordingStatus === 'uploading') {
+      return 'triggered';
+    }
+    if (voiceStage === 'armed') return 'armed';
+    return 'calm';
+  }, [alertActive, recordingStatus, voiceStage]);
+
+  const dialCaption = recordingStatus === 'uploading'
+    ? 'ALERT SENT · UPLOADING'
+    : recordingStatus === 'recording'
+      ? 'ALERT SENT · RECORDING'
+      : ringState === 'armed'
+        ? 'LISTENING FOR “EMERGENCY”...'
+        : undefined;
+
+  const accuracyLabel = accuracyM
+    ? `ACCURACY ${accuracyM}m · ${clock}`
+    : `POSITION PENDING · ${clock}`;
+
   return (
-    <div className="w-full p-2 bg-slate-50">
-      {locationError && (
-        <div className="p-2 mb-2 bg-red-100 text-red-800 text-center">
-          {locationError}
+    <div className={`page-shell relative ${ringState === 'triggered' ? 'page-shell-alert' : ''}`}>
+      <div className="mx-auto w-full max-w-lg pt-2">
+        <div className="card-surface px-4 py-2.5 mb-8">
+          <p className="mono-readout text-center">{accuracyLabel}</p>
         </div>
-      )}
 
-      <div className="w-full flex items-center justify-center gap-3 pt-3">
-        <button
-          onClick={voiceListening ? stopVoiceActivation : startVoiceActivation}
-          disabled={!voiceSupported}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-colors
-            ${voiceListening ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-700 border-gray-300'}
-            ${!voiceSupported ? 'opacity-40 cursor-not-allowed' : 'hover:border-red-400'}`}
-          title={voiceSupported ? 'Toggle hands-free voice activation' : 'Not supported in this browser'}
-        >
-          {voiceListening ? <Mic className="w-4 h-4 animate-pulse" /> : <MicOff className="w-4 h-4" />}
-          {voiceListening ? 'Listening for "help me"…' : 'Voice Activation'}
-        </button>
-      </div>
-      {!voiceSupported && (
-        <p className="text-center text-xs text-gray-400 mt-1">
-          Voice activation needs Chrome/Edge on Android or desktop — not supported in this browser.
-        </p>
-      )}
-      {voiceError && (
-        <p className="text-center text-xs text-red-500 mt-1">{voiceError}</p>
-      )}
+        {locationError && (
+          <p className="mb-4 text-center text-caption text-dusk">{locationError}</p>
+        )}
 
-      <div className="w-full h-[40vh] p-2 flex items-center justify-center" onClick={handleSOS}>
-        <SOSButton />
-      </div>
+        <GuardianDial
+          ringState={ringState}
+          caption={dialCaption}
+          onHoldComplete={handleSOS}
+        />
 
-      {recordingStatus === 'recording' && (
-        <div className="w-full flex flex-col items-center gap-2 -mt-4 mb-4">
-          <div className="flex items-center gap-2 text-red-600 text-sm font-semibold">
-            <Video className="w-4 h-4 animate-pulse" />
-            Recording evidence (auto-stops in {Math.round(maxDurationMs / 1000)}s)…
+        {recordingStatus === 'recording' && (
+          <div className="mt-2 flex flex-col items-center gap-2">
+            <span className="badge-signal">
+              Recording · auto-stops in {Math.round(maxDurationMs / 1000)}s
+            </span>
+            <button type="button" onClick={stopRecording} className="btn-secondary text-caption">
+              <StopCircle className="w-4 h-4" />
+              Stop and send now
+            </button>
           </div>
-          <button
-            onClick={stopRecording}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-red-300 text-red-600 hover:bg-red-50"
-          >
-            <StopCircle className="w-4 h-4" />
-            Stop &amp; send now
-          </button>
-        </div>
-      )}
-      {recordingStatus === 'uploading' && (
-        <p className="text-center text-sm text-gray-500 -mt-4 mb-4">Uploading evidence clip…</p>
-      )}
+        )}
 
-      <div className="w-full p-4">
-        <h1 className="text-gray-900 text-xl font-bold md:text-2xl">Emergency Contacts</h1>
-        <div className="w-full flex flex-col gap-3 mt-4 md:flex-row md:flex-wrap md:justify-center md:items-center">
-          {contactsdata.length > 0 ? (
-            contactsdata.map((contact, index) => (
-              <div
-                key={index}
-                className="w-full p-4 rounded-lg bg-white shadow-sm hover:shadow-md border flex items-center gap-4 md:w-[30%] justify-between"
+        {voiceSupported && (
+          <div className="mt-6 flex flex-col items-center gap-1.5">
+            <button
+              type="button"
+              onClick={voiceListening ? stopVoiceActivation : startVoiceActivation}
+              className={`inline-flex items-center gap-2 min-h-touch rounded-pill px-3.5 py-1.5 text-caption transition-colors duration-page ${
+                voiceStage === 'armed'
+                  ? 'bg-dusk-soft text-dusk'
+                  : voiceListening
+                    ? 'bg-sage-soft text-sage'
+                    : 'bg-paper-raised text-ink-soft border border-slate-line'
+              }`}
+              title={voiceListening ? 'Turn off voice activation' : 'Enable hands-free voice activation'}
+            >
+              {voiceListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+              {voiceStage === 'armed'
+                ? 'Voice: listening for “emergency”'
+                : voiceListening
+                  ? 'Voice: listening for “Hey Safe”'
+                  : 'Voice: off'}
+            </button>
+            {voiceError && (
+              <p className="text-center text-caption text-dusk max-w-xs">{voiceError}</p>
+            )}
+          </div>
+        )}
+
+        <section className="mt-10">
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="text-heading text-ink">Trusted Circle</h2>
+            <span className="mono-readout">{contactsdata.length}/3</span>
+          </div>
+
+          <div className="flex items-center justify-center gap-0 min-h-[88px]">
+            {contactsdata.map((contact, index) => (
+              <button
+                key={contact._id || index}
+                type="button"
+                onClick={() => setSelectedContact(contact)}
+                className="relative min-h-touch min-w-touch -ml-3 first:ml-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-dusk rounded-full"
+                style={{ zIndex: contactsdata.length - index }}
+                aria-label={contact.name}
               >
                 <img
-                  className="w-16 h-16 rounded-full object-cover"
+                  className="h-16 w-16 rounded-full object-cover border-2 border-paper"
                   src={contact.photo}
-                  alt="Contact"
+                  alt=""
                 />
-                <div>
-                  <h2 className="text-gray-700 font-bold">{contact.name}</h2>
-                  <h3 className="text-gray-500">{contact.MobileNo}</h3>
-                  {contact.email && (
-                    <h3 className="text-gray-400 text-sm">{contact.email}</h3>
-                  )}
-                </div>
-                <button
-                  onClick={() => handleDelete(contact._id)}
-                  className="w-10 h-10 rounded-lg border-none hover:text-red-400"
-                >
-                  <CircleX className="h-6 w-6" />
-                </button>
-              </div>
-            ))
-          ) : (
-            <h1 className="text-gray-700 font-bold">No Contacts Found</h1>
-          )}
-        </div>
-      </div>
+              </button>
+            ))}
 
-      <div className="w-full p-4 flex items-center justify-center flex-col">
-        <button
-          className="text-red-400 font-bold flex items-center gap-2 px-4 py-2 hover:bg-red-50 rounded-lg border hover:border-red-300"
-          onClick={() => setShowAddContact(true)}
-          disabled={contactsdata.length >= 3}
-        >
-          <Plus className="w-5 h-5" />
-          Add New Contact
-        </button>
-        {contactsdata.length >= 3 && (
-          <span className="text-red-700 text-center">
-            You Can Add Maximum 3 Contacts
-          </span>
-        )}
+            <button
+              type="button"
+              onClick={() => setShowAddContact(true)}
+              disabled={contactsdata.length >= 3}
+              className={`relative -ml-1 flex h-16 w-16 min-h-touch min-w-touch items-center justify-center rounded-full border border-dashed border-dusk text-dusk bg-dusk-soft ${
+                contactsdata.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''
+              }`}
+              aria-label="Add to Trusted Circle"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="mt-3 flex justify-center gap-4 flex-wrap">
+            {contactsdata.map((contact) => (
+              <span key={`label-${contact._id}`} className="text-caption text-ink-soft">
+                {contact.name}
+              </span>
+            ))}
+          </div>
+
+          {contactsdata.length === 0 && (
+            <p className="mt-4 text-center text-body text-ink-soft">
+              No one in your Trusted Circle yet — add someone who should know if you need help.
+            </p>
+          )}
+          {contactsdata.length >= 3 && (
+            <p className="mt-3 text-center text-caption text-ink-soft">
+              Trusted Circle is full (3 people). Remove someone to add another.
+            </p>
+          )}
+        </section>
       </div>
 
       {showLoader && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-ink/30 z-50">
           <Loader />
         </div>
       )}
 
+      {selectedContact && (
+        <div className="fixed inset-0 bg-ink/40 flex items-end sm:items-center justify-center p-4 z-40">
+          <div className="card-surface w-full max-w-lg p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <img className="h-14 w-14 rounded-full object-cover" src={selectedContact.photo} alt="" />
+                <div>
+                  <h3 className="text-heading">{selectedContact.name}</h3>
+                  <p className="mono-readout normal-case tracking-normal">{selectedContact.MobileNo}</p>
+                  {selectedContact.email && (
+                    <p className="text-caption text-ink-soft">{selectedContact.email}</p>
+                  )}
+                </div>
+              </div>
+              <button type="button" className="btn-ghost" onClick={() => setSelectedContact(null)} aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <button
+              type="button"
+              className="btn-secondary w-full mt-6"
+              onClick={() => handleDelete(selectedContact._id)}
+            >
+              Remove from circle
+            </button>
+          </div>
+        </div>
+      )}
+
       {showAddContact && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
-            <div className="p-6 space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Add New Contact</h2>
-                <button
-                  onClick={() => setShowAddContact(false)}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <X className="h-6 w-6" />
+        <div className="fixed inset-0 bg-ink/40 flex items-end sm:items-center justify-center p-4 z-40">
+          <div className="card-surface max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-heading">Add to Trusted Circle</h2>
+              <button type="button" className="btn-ghost" onClick={() => setShowAddContact(false)} aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit(Submit)} className="space-y-4">
+              <div>
+                <label className="field-label">Profile photo</label>
+                <input
+                  type="file"
+                  accept="image/png, image/jpg, image/jpeg, image/webp"
+                  className="field-input"
+                  {...register('photo', { required: true })}
+                />
+              </div>
+              <div>
+                <label className="field-label">Name</label>
+                <input type="text" className="field-input" placeholder="Who should we alert" {...register('name', { required: true })} />
+              </div>
+              <div>
+                <label className="field-label">Mobile number</label>
+                <input type="text" className="field-input" placeholder="10 digit mobile number" {...register('MobileNo', { required: true })} />
+              </div>
+              <div>
+                <label className="field-label">Email</label>
+                <input type="email" className="field-input" placeholder="name@example.com" {...register('email', { required: true })} />
+              </div>
+              <div className="flex flex-col gap-3 pt-2">
+                <button type="submit" className="btn-primary w-full">Add to Trusted Circle</button>
+                <button type="button" onClick={() => setShowAddContact(false)} className="btn-secondary w-full">
+                  Cancel
                 </button>
               </div>
-
-              <form onSubmit={handleSubmit(Submit)} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium">Profile Photo</label>
-                  <input
-                    type="file"
-                    accept="image/png, image/jpg, image/jpeg, image/webp"
-                    className="block w-full px-3 py-2 border rounded-lg"
-                    {...register('photo', { required: true })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium">Name</label>
-                  <input
-                    type="text"
-                    className="block w-full px-3 py-2 border rounded-lg"
-                    placeholder="Contact name"
-                    {...register('name', { required: true })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium">Contact Number</label>
-                  <input
-                    type="text"
-                    className="block w-full px-3 py-2 border rounded-lg"
-                    placeholder="10 digit mobile number"
-                    {...register('MobileNo', { required: true })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium">Email Address</label>
-                  <input
-                    type="email"
-                    className="block w-full px-3 py-2 border rounded-lg"
-                    placeholder="emergency@example.com"
-                    {...register('email', { required: true })}
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddContact(false)}
-                    className="px-4 py-2 text-sm border rounded-lg"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg"
-                  >
-                    Submit
-                  </button>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
         </div>
       )}

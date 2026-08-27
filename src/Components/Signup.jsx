@@ -8,28 +8,26 @@ import { AuthContext } from '../Context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../API/CustomApi';
 
-
-
 function Signup() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const { register, handleSubmit, formState: { errors: formErrors } } = useForm();
+    const { register, handleSubmit } = useForm();
     const [errors, setErrors] = useState("");
-    const { setAuth, setUser, checkAuth } = useContext(AuthContext);
+    const { checkAuth } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const Submit = async (data) => {
         setErrors("");
         try {
             if (data.password !== password) {
-                setErrors("Password Doesn't match");
+                setErrors("Passwords do not match");
                 return;
             }
 
             if (!data.agreeToTerms) {
-                setErrors("Please agree to the Terms and Privacy Policy");
+                setErrors("Agree to the Terms and Privacy Policy to continue");
                 return;
             }
 
@@ -40,7 +38,6 @@ function Signup() {
                     email: data.email,
                     password: data.password
                 }
-
             );
 
             if (response.data) {
@@ -48,7 +45,7 @@ function Signup() {
                 navigate("/HomePage");
             }
         } catch (error) {
-            setErrors(error.response?.data?.message || "Signup failed. Please try again.");
+            setErrors(error.response?.data?.message || "Could not create the account. Try again.");
         } finally {
             setIsLoading(false);
         }
@@ -76,7 +73,6 @@ function Signup() {
                     name: googleUser.name,
                     picture: googleUser.picture
                 }
-
             );
 
             if (response.data) {
@@ -84,7 +80,7 @@ function Signup() {
                 navigate("/HomePage");
             }
         } catch (error) {
-            setErrors("Google signup failed: " + (error.response?.data?.message || "Please try again"));
+            setErrors("Google sign-up did not complete. Try again.");
         } finally {
             setIsLoading(false);
         }
@@ -94,78 +90,61 @@ function Signup() {
         onSuccess: handleGoogleSuccess,
         onError: (error) => {
             console.error("Google login error:", error);
-            setErrors("Google signup failed. Please try again.");
+            setErrors("Google sign-up did not complete. Try again.");
         }
     });
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-gray-100 p-4">
+        <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-paper p-4">
             <div className="w-full max-w-md">
-                {/* Logo Section */}
                 <div className="mb-8 text-center">
-                    <img className="h-12 mx-auto mb-4" src="/logo.svg" alt="Logo" />
-                    <h1 className="text-2xl font-bold text-black mb-2">Create an Account</h1>
-                    <p className="text-gray-600">Join us to stay safe and connected</p>
+                    <p className="mono-readout mb-3">CREATE ACCOUNT</p>
+                    <h1 className="font-display text-display-sm text-ink mb-2">Join your circle</h1>
+                    <p className="text-body text-ink-soft">Set up an account so someone can be reached if you need help.</p>
                 </div>
 
-                {/* Signup Form */}
-                <form onSubmit={handleSubmit(Submit)} className="bg-white rounded-lg border-2 border-dotted border-black p-6 space-y-4">
-                    {/* Google Sign Up Button */}
+                <form onSubmit={handleSubmit(Submit)} className="card-surface p-6 space-y-4">
                     <button
                         type="button"
                         disabled={isLoading}
-                        className={`w-full flex items-center justify-center gap-2 py-2.5 border-2 border-gray-200 hover:bg-gray-50 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
+                        className="btn-secondary w-full"
                         onClick={() => handleGoogleSignup()}
                     >
-                        <img
-                            src="/google.jfif"
-                            alt="Google logo"
-                            className="w-5 h-5"
-                        />
-                        {isLoading ? 'Loading...' : 'Sign up with Google'}
+                        <img src="/google.jfif" alt="" className="w-5 h-5" />
+                        {isLoading ? 'Loading…' : 'Continue with Google'}
                     </button>
 
                     {errors && (
-                        <div className="text-red-500 text-sm text-center">
-                            {errors}
-                        </div>
+                        <p className="text-caption text-dusk text-center">{errors}</p>
                     )}
 
-                    <div className="relative flex py-5 items-center">
-                        <div className="flex-grow border-t border-gray-200"></div>
-                        <span className="flex-shrink mx-4 text-gray-400">or</span>
-                        <div className="flex-grow border-t border-gray-200"></div>
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-slate-line"></div>
+                        <span className="flex-shrink mx-4 text-caption text-ink-soft">or</span>
+                        <div className="flex-grow border-t border-slate-line"></div>
                     </div>
 
-                    <div className='w-full'>
-                        <label htmlFor="firstName" className="block text-sm font-semibold text-gray-700 mb-1">
-                            User Name
-                        </label>
+                    <div>
+                        <label htmlFor="userName" className="field-label">Username</label>
                         <input
                             type="text"
                             id="userName"
-                            name="userName"
-                            className={`w-full px-3 py-2 rounded-lg border ${errors.userName ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-black transition-colors duration-300`}
+                            className="field-input"
                             {...register("userName", {
-                                required: "Username is Required",
+                                required: "Username is required",
                                 maxLength: 20
                             })}
-                            placeholder="Enter Your Username"
+                            placeholder="Choose a username"
                         />
                     </div>
 
-                    {/* Email Field */}
                     <div>
-                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
-                            Email Address
-                        </label>
+                        <label htmlFor="email" className="field-label">Email</label>
                         <input
                             type="email"
                             id="email"
-                            name="email"
-                            className={`w-full px-3 py-2 rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-black transition-colors duration-300`}
-                            placeholder="john.doe@example.com"
+                            className="field-input"
+                            placeholder="you@example.com"
                             {...register("email", {
                                 required: true,
                                 pattern: {
@@ -176,101 +155,79 @@ function Signup() {
                         />
                     </div>
 
-                    <div className="space-y-4">
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    id="password"
-                                    name="password"
-                                    className={`w-full px-3 py-2 rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-black transition-colors duration-300`}
-                                    placeholder="••••••••"
-                                    {...register("password", {
-                                        required: true,
-                                        maxLength: 20
-                                    })}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                >
-                                    {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Confirm Password */}
-                        <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1">
-                                Confirm Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showConfirmPassword ? 'text' : 'password'}
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className={`w-full px-3 py-2 rounded-lg border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-black transition-colors duration-300`}
-                                    placeholder="••••••••"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                >
-                                    {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-                                </button>
-                            </div>
-                            {errors && (
-                                <p className="mt-1 text-sm text-red-500">{errors}</p>
-                            )}
+                    <div>
+                        <label htmlFor="password" className="field-label">Password</label>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                id="password"
+                                className="field-input pr-12"
+                                placeholder="••••••••"
+                                {...register("password", {
+                                    required: true,
+                                    maxLength: 20
+                                })}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-touch min-w-touch text-ink-soft"
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                            </button>
                         </div>
                     </div>
 
-                    {/* Terms and Conditions */}
-                    <div className="flex items-start space-x-2">
+                    <div>
+                        <label htmlFor="confirmPassword" className="field-label">Confirm password</label>
+                        <div className="relative">
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                id="confirmPassword"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="field-input pr-12"
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-touch min-w-touch text-ink-soft"
+                                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {showConfirmPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-2">
                         <input
                             type="checkbox"
                             id="agreeToTerms"
-                            name="agreeToTerms"
-                            className="mt-1 rounded border-gray-300 text-black focus:ring-black"
+                            className="mt-1 accent-dusk"
                             {...register("agreeToTerms", {
                                 required: "You must agree to the Terms and Privacy Policy"
                             })}
                         />
-                        <label htmlFor="agreeToTerms" className="text-sm text-gray-600">
+                        <label htmlFor="agreeToTerms" className="text-caption text-ink-soft">
                             I agree to the{' '}
-                            <a href="/terms" className="text-black hover:underline">Terms of Service</a>
+                            <a href="/terms" className="text-dusk">Terms of Service</a>
                             {' '}and{' '}
-                            <a href="/privacy" className="text-black hover:underline">Privacy Policy</a>
+                            <a href="/privacy" className="text-dusk">Privacy Policy</a>
                         </label>
                     </div>
-                    {errors.agreeToTerms && (
-                        <p className="text-sm text-red-500">{errors.agreeToTerms}</p>
-                    )}
 
-                    <button
-                        type="submit"
-                        className="w-full bg-black text-white rounded-lg py-2.5 font-semibold hover:bg-gray-800 transition-colors duration-300"
-                    >
-                        Create Account
+                    <button type="submit" disabled={isLoading} className="btn-primary w-full">
+                        {isLoading ? 'Creating account…' : 'Create account'}
                     </button>
 
-                    {/* Login Link */}
-                    <div className="text-center text-sm text-gray-600">
+                    <p className="text-center text-caption text-ink-soft">
                         Already have an account?{' '}
-                        <Link
-                            to={"/login"}
-                            className="font-semibold text-black hover:underline"
-                        >
+                        <Link to="/login" className="text-dusk font-medium">
                             Sign in
                         </Link>
-                    </div>
+                    </p>
                 </form>
             </div>
         </div>

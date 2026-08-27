@@ -9,11 +9,11 @@ function Testimony() {
         },
         {
             name: 'John Smith',
-            content: 'Outstanding service and support! The team went above and beyond to ensure our success. Highly recommend to anyone looking for quality solutions.'
+            content: 'Outstanding service and support. The team went above and beyond to ensure our success. Highly recommend to anyone looking for quality solutions.'
         },
         {
             name: 'Emma Wilson',
-            content: 'The results speak for themselves. We\'ve seen a 300% increase in efficiency since implementing this solution. Game-changer for our workflow.'
+            content: 'The results speak for themselves. We have seen a 300% increase in efficiency since implementing this solution. A genuine change for our workflow.'
         },
         {
             name: 'Michael Brown',
@@ -22,29 +22,24 @@ function Testimony() {
     ];
 
     return (
-        <section className='w-full rounded-xl bg-gradient-to-r from-violet-200 to-pink-200 mb-8'>
+        <section className='w-full rounded-card bg-dusk-soft mb-8 overflow-hidden'>
             <div className='w-full relative py-12'>
-                <div className='w-full p-6 z-10 relative'>
-                    <h1 className='text-3xl font-bold text-center mb-8 text-gray-800'>What Our Clients Say</h1>
-                    <div className='flex flex-col gap-6 md:flex-row md:flex-wrap md:justify-center md:items-stretch'>
+                <div className='w-full px-4 md:px-6 z-10 relative'>
+                    <p className='mono-readout text-center mb-2'>FIELD REPORTS</p>
+                    <h1 className='font-display text-display-sm text-center mb-8 text-ink'>What people notice</h1>
+                    <div className='flex flex-col gap-4 md:flex-row md:flex-wrap md:justify-center'>
                         {testimonials.map((testimonial, index) => (
                             <React.Fragment key={index}>
-                                {(index === 0 || window.innerWidth >= 768) && (
+                                {(index === 0 || (typeof window !== 'undefined' && window.innerWidth >= 768)) && (
                                     <TestimonialCard
                                         name={testimonial.name}
                                         content={testimonial.content}
                                     />
-                                    
                                 )}
                             </React.Fragment>
                         ))}
                     </div>
                 </div>
-                <img 
-                    className='w-full h-full object-cover absolute top-0 left-0 opacity-0 md:opacity-10 transition-opacity duration-300' 
-                    src="/background.svg" 
-                    alt="Background pattern" 
-                />
             </div>
         </section>
     );
