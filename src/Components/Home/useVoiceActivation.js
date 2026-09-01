@@ -1,17 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// Two-stage, Google-Assistant-style voice activation:
-//   Stage 1 (sleeping):  only listens for the wake word ("hey safe").
-//                        Hearing it "arms" the app - like the screen
-//                        lighting up after "Hey Google".
-//   Stage 2 (armed):     for a short window after the wake word, listens
-//                        for an actual command ("emergency", "help me",
-//                        "need help"). Hearing one fires SOS. If nothing
-//                        is said in time, it quietly goes back to sleep.
-//
-// Saying "emergency" out of nowhere, with no wake word first, does NOT
-// trigger SOS - that's the point of the two stages, to avoid firing on a
-// random overheard word.
+// Single-stage, direct voice activation:
+//   Listening always: recognizing any of the SOS phrases below immediately
+//   fires the trigger - no wake word needed.
 //
 // Honest platform limits (worth knowing, not hiding):
 // - This only works while the browser tab is open (foreground or
@@ -24,9 +15,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 //   is a browser-level behavior we can't fully silence from JS, but we
 //   restart far less often than a naive implementation (see debounce below)
 //   so it happens noticeably less.
-const WAKE_PHRASES = ['hey safe', 'hey save', 'a safe']; // last 2 catch common mis-hears
-const COMMAND_PHRASES = ['emergency', 'need help', 'help me', 'save me'];
-const ARMED_WINDOW_MS = 8000;
+const SOS_PHRASES = ['emergency', 'help me', 'i need help', 'need help', 'save me'];
+const COOLDOWN_MS = 5000; // stop interim+final events double-firing
 const RESTART_DEBOUNCE_MS = 600;
 const STORAGE_KEY = 'imsafe_voice_activation_enabled';
 
@@ -35,56 +25,42 @@ export function useVoiceActivation(onTrigger) {
     typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition)
   );
   const [isListening, setIsListening] = useState(false);
-  const [stage, setStage] = useState('sleeping'); // 'sleeping' | 'armed'
+  const [stage, setStage] = useState('idle'); // 'idle' | 'listening'
   const [micError, setMicError] = useState(null);
 
   const recognitionRef = useRef(null);
   const shouldRestartRef = useRef(false);
   const restartTimeoutRef = useRef(null);
-  const armedTimeoutRef = useRef(null);
+  const lastTriggerAtRef = useRef(0);
   const onTriggerRef = useRef(onTrigger);
   onTriggerRef.current = onTrigger;
-
-  const disarm = useCallback(() => {
-    clearTimeout(armedTimeoutRef.current);
-    setStage('sleeping');
-  }, []);
-
-  const arm = useCallback(() => {
-    clearTimeout(armedTimeoutRef.current);
-    armedTimeoutRef.current = setTimeout(() => disarm(), ARMED_WINDOW_MS);
-  }, [disarm]);
 
   const buildRecognizer = useCallback(() => {
     const SpeechRecognitionImpl = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognitionImpl();
     recognition.continuous = true;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.lang = 'en-IN';
 
     recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
+      // Use the latest interim/final transcript for the fastest detection.
+      const latest = event.results[event.results.length - 1]?.[0]?.transcript || '';
+      const transcript = `${latest} ${Array.from(event.results)
         .map((r) => r[0].transcript)
-        .join(' ')
-        .toLowerCase();
+        .join(' ')}`.toLowerCase();
 
-      setStage((currentStage) => {
-        if (currentStage === 'sleeping') {
-          if (WAKE_PHRASES.some((phrase) => transcript.includes(phrase))) {
-            arm();
-            return 'armed';
-          }
-          return currentStage;
-        }
+      if (!SOS_PHRASES.some((phrase) => transcript.includes(phrase))) {
+        return;
+      }
 
-        // currentStage === 'armed'
-        if (COMMAND_PHRASES.some((phrase) => transcript.includes(phrase))) {
-          clearTimeout(armedTimeoutRef.current);
-          onTriggerRef.current?.();
-          return 'sleeping';
-        }
-        return currentStage;
-      });
+      // Cooldown prevents interim + final events for the same utterance from
+      // firing the SOS more than once.
+      const now = Date.now();
+      if (now - lastTriggerAtRef.current < COOLDOWN_MS) {
+        return;
+      }
+      lastTriggerAtRef.current = now;
+      onTriggerRef.current?.();
     };
 
     recognition.onerror = (event) => {
@@ -111,11 +87,12 @@ export function useVoiceActivation(onTrigger) {
         }, RESTART_DEBOUNCE_MS);
       } else {
         setIsListening(false);
+        setStage('idle');
       }
     };
 
     return recognition;
-  }, [arm]);
+  }, []);
 
   const startListening = useCallback(() => {
     if (!isSupported) {
@@ -129,6 +106,7 @@ export function useVoiceActivation(onTrigger) {
     try {
       recognition.start();
       setIsListening(true);
+      setStage('listening');
       localStorage.setItem(STORAGE_KEY, 'true');
     } catch (err) {
       setMicError(err.message);
@@ -138,11 +116,11 @@ export function useVoiceActivation(onTrigger) {
   const stopListening = useCallback(() => {
     shouldRestartRef.current = false;
     clearTimeout(restartTimeoutRef.current);
-    disarm();
     recognitionRef.current?.stop();
     setIsListening(false);
+    setStage('idle');
     localStorage.setItem(STORAGE_KEY, 'false');
-  }, [disarm]);
+  }, []);
 
   // Remember the user's choice across visits/reloads, like a real
   // "always on" assistant setting - but still needs one fresh permission
@@ -155,7 +133,6 @@ export function useVoiceActivation(onTrigger) {
     return () => {
       shouldRestartRef.current = false;
       clearTimeout(restartTimeoutRef.current);
-      clearTimeout(armedTimeoutRef.current);
       recognitionRef.current?.stop();
     };
   }, []);
@@ -163,7 +140,7 @@ export function useVoiceActivation(onTrigger) {
   return {
     isSupported,
     isListening,
-    stage, // 'sleeping' or 'armed' - drives the UI indicator
+    stage, // 'idle' or 'listening' - drives the UI indicator
     micError,
     startListening,
     stopListening,

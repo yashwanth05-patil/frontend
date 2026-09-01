@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import GuardianDial from '../GuardianDial';
 import { Plus, X, Mic, MicOff, StopCircle } from 'lucide-react';
 import BottomNav from './BottomNav';
@@ -28,6 +28,7 @@ function AfterLogin() {
   const [accuracyM, setAccuracyM] = useState(null);
   const [clock, setClock] = useState(() => formatClock(new Date()));
   const [alertActive, setAlertActive] = useState(false);
+  const sosInProgressRef = useRef(false);
 
   const { status: recordingStatus, startRecording, stopRecording, maxDurationMs, secondsRemaining } = useSOSRecorder();
 
@@ -260,55 +261,66 @@ function AfterLogin() {
     return { latitude: data.latitude, longitude: data.longitude };
   };
 
-  const handleSOS = async () => {
+  // Guard against duplicate triggers (double tap, voice interim + final
+  // events, hold + voice) so recording and alerts only start once.
+  const handleSOS = () => {
+    if (sosInProgressRef.current) return;
+    sosInProgressRef.current = true;
+
     setLocationError(null);
     setAlertActive(true);
 
-    try {
-      if (!contactsdata || contactsdata.length === 0) {
-        throw new Error('Add someone to your Trusted Circle before sending an alert');
-      }
-
-      const location = await getLocation();
-
-      await api.post(Config.EMERGENCYUrl, {
-        contacts: contactsdata,
-        contactNumbers: contactsdata.map((c) => c.MobileNo),
-        senderName: user?.username || "Someone",
-        location: {
-          latitude: location.latitude,
-          longitude: location.longitude,
-        },
-      });
-
-      toast.success('Alert sent to your Trusted Circle');
-
-      toast.info('Recording an evidence clip in the background');
-      startRecording(user?._id).then((evidenceUrl) => {
-        if (evidenceUrl) {
-          sendEvidenceLink(evidenceUrl);
-        } else {
-          toast.warn('Could not record evidence — camera or microphone is unavailable');
-        }
-      });
-    } catch (error) {
-      console.error('SOS Error:', error);
-      setAlertActive(false);
-      const message = error.message || 'Emergency alert could not be sent';
-      if (message.toLowerCase().includes('location') || message.toLowerCase().includes('geolocation')) {
-        setLocationError('Location permission is off. Turn it on in Settings to send your position.');
+    // 1) Start recording immediately - never wait for GPS or the emergency
+    //    API. The recording keeps going even if either of those fails.
+    toast.info('Recording an evidence clip in the background');
+    startRecording(user?._id).then((evidenceUrl) => {
+      if (evidenceUrl) {
+        sendEvidenceLink(evidenceUrl);
       } else {
-        setLocationError(message);
+        toast.warn('Could not record evidence — camera or microphone is unavailable');
       }
-      toast.error(message);
-    }
+    });
+
+    // 2) GPS + emergency API run in parallel with the recording.
+    (async () => {
+      try {
+        if (!contactsdata || contactsdata.length === 0) {
+          throw new Error('Add someone to your Trusted Circle before sending an alert');
+        }
+
+        const location = await getLocation();
+
+        await api.post(Config.EMERGENCYUrl, {
+          contacts: contactsdata,
+          contactNumbers: contactsdata.map((c) => c.MobileNo),
+          senderName: user?.username || "Someone",
+          location: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+          },
+        });
+
+        toast.success('Alert sent to your Trusted Circle');
+      } catch (error) {
+        console.error('SOS Error:', error);
+        const message = error.message || 'Emergency alert could not be sent';
+        if (message.toLowerCase().includes('location') || message.toLowerCase().includes('geolocation')) {
+          setLocationError('Location permission is off. Turn it on in Settings to send your position.');
+        } else {
+          setLocationError(message);
+        }
+        toast.error(message);
+      } finally {
+        sosInProgressRef.current = false;
+      }
+    })();
   };
 
   const ringState = useMemo(() => {
     if (alertActive || recordingStatus === 'recording' || recordingStatus === 'uploading') {
       return 'triggered';
     }
-    if (voiceStage === 'armed') return 'armed';
+    if (voiceStage === 'listening') return 'armed';
     return 'calm';
   }, [alertActive, recordingStatus, voiceStage]);
 
@@ -359,20 +371,16 @@ function AfterLogin() {
               type="button"
               onClick={voiceListening ? stopVoiceActivation : startVoiceActivation}
               className={`inline-flex items-center gap-2 min-h-touch rounded-pill px-3.5 py-1.5 text-caption transition-colors duration-page ${
-                voiceStage === 'armed'
+                voiceListening
                   ? 'bg-dusk-soft text-dusk'
-                  : voiceListening
-                    ? 'bg-sage-soft text-sage'
-                    : 'bg-paper-raised text-ink-soft border border-slate-line'
+                  : 'bg-paper-raised text-ink-soft border border-slate-line'
               }`}
               title={voiceListening ? 'Turn off voice activation' : 'Enable hands-free voice activation'}
             >
               {voiceListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-              {voiceStage === 'armed'
+              {voiceListening
                 ? 'Voice: listening for “emergency”'
-                : voiceListening
-                  ? 'Voice: listening for “Hey Safe”'
-                  : 'Voice: off'}
+                : 'Voice: off'}
             </button>
             {voiceError && (
               <p className="text-center text-caption text-dusk max-w-xs">{voiceError}</p>
