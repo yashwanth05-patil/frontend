@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const HOLD_MS = 1600
+const HOLD_MS = 500
 
 function GuardianDial({
   ringState = 'calm',
