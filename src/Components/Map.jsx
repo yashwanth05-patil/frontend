@@ -3,9 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import BottomNav from "./Home/BottomNav";
-import "../App.css"
 
-// Fix marker icons issue in Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -14,14 +12,14 @@ L.Icon.Default.mergeOptions({
 });
 
 const TrackMeMap = () => {
-  const [currentPosition, setCurrentPosition] = useState([19.0760, 72.8777]); // Initial location
+  const [currentPosition, setCurrentPosition] = useState([19.0760, 72.8777]);
   const [isTracking, setIsTracking] = useState(false);
   const [watchId, setWatchId] = useState(null);
+  const [fixMeta, setFixMeta] = useState({ accuracy: null, method: null });
   const mapRef = useRef(null);
 
   const getIPBasedLocation = async () => {
     try {
-
       let response = await fetch('https://ipapi.co/json/');
       if (!response.ok) throw new Error('First IP API failed');
 
@@ -34,7 +32,6 @@ const TrackMeMap = () => {
           method: 'ipapi'
         };
       }
-
 
       response = await fetch('https://ipwho.is/');
       if (!response.ok) throw new Error('Second IP API failed');
@@ -53,7 +50,6 @@ const TrackMeMap = () => {
   };
 
   const getLocation = async () => {
-
     if (navigator.geolocation) {
       try {
         const position = await new Promise((resolve, reject) => {
@@ -74,7 +70,6 @@ const TrackMeMap = () => {
       }
     }
 
-
     try {
       const ipLocation = await getIPBasedLocation();
       return ipLocation;
@@ -85,11 +80,14 @@ const TrackMeMap = () => {
   };
 
   const handleTrackMe = async () => {
-
     if (!isTracking) {
       const location = await getLocation()
       const newLocation = [location.latitude, location.longitude]
       setCurrentPosition(newLocation);
+      setFixMeta({
+        accuracy: location.accuracy ? Math.round(location.accuracy) : null,
+        method: location.method,
+      });
       if (mapRef.current) {
         mapRef.current.setView(newLocation, 15);
       }
@@ -103,7 +101,6 @@ const TrackMeMap = () => {
     }
   };
 
-  // Cleanup effect
   useEffect(() => {
     return () => {
       if (watchId) {
@@ -113,38 +110,43 @@ const TrackMeMap = () => {
   }, [watchId]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-76px)] relative">
-      <div className="flex-1 p-4">
-        <div className="flex flex-col h-full">
-          <button
-            onClick={handleTrackMe}
-            className="w-full md:w-auto self-center mb-4 text-red-400 font-bold flex items-center justify-center gap-2 px-6 py-2.5 hover:bg-red-50 rounded-lg transition-all border-2 border-red-300"
-          >
-            {isTracking ? "Stop Tracking" : "Track Me"}
-          </button>
+    <div className="page-shell flex flex-col min-h-[calc(100vh-72px)]">
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
+        <div className="card-surface px-4 py-2.5 mb-4">
+          <p className="mono-readout text-center">
+            {isTracking
+              ? `FIX ${fixMeta.method === 'gps' ? 'GPS' : 'APPROX'} · ACCURACY ${fixMeta.accuracy ? `${fixMeta.accuracy}m` : '—'}`
+              : 'TRACKING STANDBY'}
+          </p>
+        </div>
 
-          <div className="flex-1 relative rounded-lg overflow-hidden shadow-lg">
-            <MapContainer
-              center={currentPosition}
-              zoom={15}
-              className="h-full w-full"
-              whenCreated={map => mapRef.current = map}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-              <Marker position={currentPosition}>
-                <Popup>You are here</Popup>
-              </Marker>
-            </MapContainer>
-          </div>
+        <button
+          type="button"
+          onClick={handleTrackMe}
+          className={`${isTracking ? 'btn-secondary' : 'btn-primary'} w-full sm:w-auto self-center mb-4`}
+        >
+          {isTracking ? 'Stop tracking' : 'Track me'}
+        </button>
+
+        <div className="flex-1 min-h-[52vh] relative rounded-card overflow-hidden border border-slate-line">
+          <MapContainer
+            center={currentPosition}
+            zoom={15}
+            className="h-full w-full min-h-[52vh]"
+            whenCreated={map => mapRef.current = map}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <Marker position={currentPosition}>
+              <Popup>You are here</Popup>
+            </Marker>
+          </MapContainer>
         </div>
       </div>
 
-      <div className="w-full p-2 bg-white">
-        <BottomNav />
-      </div>
+      <BottomNav />
     </div>
   );
 };

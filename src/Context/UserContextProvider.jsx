@@ -61,6 +61,7 @@ const UserContextProvider = ({ children }) => {
                 setUser(null);
 
                 console.log("Logged out successfully.");
+                return true;
             }
         } catch (error) {
             console.error("Logout failed:", error);

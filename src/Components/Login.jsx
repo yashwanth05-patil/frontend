@@ -14,12 +14,11 @@ function Login() {
     const { register, handleSubmit } = useForm();
     const [errors, setErrors] = useState("");
     const navigate = useNavigate();
-    const {setAuth,setUser, checkAuth} = useContext(AuthContext)
+    const { checkAuth } = useContext(AuthContext)
 
     const Submit = async (data) => {
         setErrors("");
         setIsLoading(true);
-      //  console.log(data)
         try {
             const response = await api.post(Config.LOGINUrl, {
                 email: data.email,
@@ -52,7 +51,6 @@ function Login() {
 
             const googleUser = userInfoResponse.data;
 
-          
             const response = await api.post(Config.GoogleSignUpUrl, {
                 email: googleUser.email,
                 name: googleUser.name,
@@ -63,10 +61,9 @@ function Login() {
             if (response.data) {
                 await checkAuth()
                 navigate("/HomePage")
-                
             }
         } catch (error) {
-            setErrors(error.response?.data?.message || "Failed to login with Google");
+            setErrors(error.response?.data?.message || "Google sign-in did not complete. Try again.");
             console.error("Google login error:", error);
         } finally {
             setIsLoading(false);
@@ -77,52 +74,41 @@ function Login() {
         onSuccess: handleGoogleSuccess,
         onError: (error) => {
             console.error("Google login error:", error);
-            setErrors("Failed to login with Google");
+            setErrors("Google sign-in did not complete. Try again.");
         }
     });
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-gray-100 p-4">
+        <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-paper p-4">
             <div className="w-full max-w-md">
-                {/* Logo Section */}
                 <div className="mb-8 text-center">
-                    <img className="h-12 mx-auto mb-4" src="/logo.svg" alt="Logo" />
-                    <h1 className="text-2xl font-bold text-black mb-2">Welcome Back!</h1>
-                    <p className="text-gray-600">Please enter your details to sign in</p>
+                    <p className="mono-readout mb-3">SIGN IN</p>
+                    <h1 className="font-display text-display-sm text-ink mb-2">Welcome back</h1>
+                    <p className="text-body text-ink-soft">Enter your details to continue watching over your circle.</p>
                 </div>
 
-                {/* Login Form */}
-                <form onSubmit={handleSubmit(Submit)} className="bg-white rounded-lg border-2 border-dotted border-black p-6 space-y-6">
-                    {/* Google Login Button */}
+                <form onSubmit={handleSubmit(Submit)} className="card-surface p-6 space-y-5">
                     <button
                         type="button"
                         disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-gray-200 hover:bg-gray-50 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="btn-secondary w-full"
                         onClick={() => handleGoogleLogin()}
                     >
-                        <img
-                            src="/google.jfif"
-                            alt="Google logo"
-                            className="w-5 h-5"
-                        />
-                        Sign in with Google
+                        <img src="/google.jfif" alt="" className="w-5 h-5" />
+                        Continue with Google
                     </button>
 
-                    <div className="relative flex py-3 items-center">
-                        <div className="flex-grow border-t border-gray-200"></div>
-                        <span className="flex-shrink mx-4 text-gray-400">or</span>
-                        <div className="flex-grow border-t border-gray-200"></div>
+                    <div className="relative flex py-1 items-center">
+                        <div className="flex-grow border-t border-slate-line"></div>
+                        <span className="flex-shrink mx-4 text-caption text-ink-soft">or</span>
+                        <div className="flex-grow border-t border-slate-line"></div>
                     </div>
 
-                    {/* Email Field */}
                     <div>
-                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                            Email Address
-                        </label>
+                        <label htmlFor="email" className="field-label">Email</label>
                         <input
                             type="email"
                             id="email"
-                            name="email"
                             {...register("email", {
                                 required: true,
                                 pattern: {
@@ -130,80 +116,58 @@ function Login() {
                                     message: "invalid email address"
                                 }
                             })}
-                            className={`w-full px-4 py-2 rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-black transition-colors duration-300`}
-                            placeholder="Enter your email"
+                            className="field-input"
+                            placeholder="you@example.com"
                         />
-                        {errors.email && (
-                            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-                        )}
                     </div>
 
-                    {/* Password Field */}
                     <div>
-                        <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                            Password
-                        </label>
+                        <label htmlFor="password" className="field-label">Password</label>
                         <div className="relative">
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 id="password"
-                                name="password"
                                 {...register("password", {
                                     required: true,
                                     maxLength: 20
                                 })}
-                                className={`w-full px-4 py-2 rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-black transition-colors duration-300`}
+                                className="field-input pr-12"
                                 placeholder="Enter your password"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-touch min-w-touch text-ink-soft"
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
                             >
-                                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                                {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                             </button>
                         </div>
                         {errors && (
-                            <p className="mt-1 text-sm text-red-500">{errors}</p>
+                            <p className="mt-2 text-caption text-dusk">{typeof errors === 'string' ? errors : ''}</p>
                         )}
                     </div>
 
-                    {/* Remember Me and Forgot Password */}
-                    <div className="flex items-center justify-between">
-                        <label className="flex items-center">
-                            <input
-                                type="checkbox"
-                                className="rounded border-gray-300 text-black focus:ring-black"
-                            />
-                            <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                    <div className="flex items-center justify-between gap-3">
+                        <label className="flex items-center text-caption text-ink-soft">
+                            <input type="checkbox" className="mr-2 accent-dusk" />
+                            Remember me
                         </label>
-                        <a
-                            href="/forgot-password"
-                            className="text-sm text-gray-600 hover:text-black transition-colors duration-300"
-                        >
-                            Forgot password?
+                        <a href="/forgot-password" className="text-caption text-dusk">
+                            Forgot password
                         </a>
                     </div>
 
-                    {/* Submit Button */}
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full bg-black text-white rounded-lg py-2.5 font-semibold hover:bg-gray-800 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isLoading ? 'Signing in...' : 'Sign In'}
+                    <button type="submit" disabled={isLoading} className="btn-primary w-full">
+                        {isLoading ? 'Signing in…' : 'Sign in'}
                     </button>
 
-                    {/* Sign Up Link */}
-                    <div className="text-center text-sm text-gray-600">
-                        Don't have an account?{' '}
-                        <Link
-                            to={"/register"}
-                            className="font-semibold text-black hover:underline"
-                        >
-                            Sign up
+                    <p className="text-center text-caption text-ink-soft">
+                        Don&apos;t have an account?{' '}
+                        <Link to="/register" className="text-dusk font-medium">
+                            Create one
                         </Link>
-                    </div>
+                    </p>
                 </form>
             </div>
         </div>

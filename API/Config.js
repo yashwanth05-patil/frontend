@@ -17,5 +17,10 @@ export const Config = {
   UPDATEEMAIL: "https://backend-0f8w.onrender.com/api/profile/update-email",
   UPDATEPASSWORD: "https://backend-0f8w.onrender.com/api/profile/update-password",
   UPLOADEVIDENCEUrl: "https://backend-0f8w.onrender.com/api/contacts/upload-evidence",
-  SENDEVIDENCEUrl: "https://backend-0f8w.onrender.com/api/contacts/send-evidence"
+  SENDEVIDENCEUrl: "https://backend-0f8w.onrender.com/api/contacts/send-evidence",
+  LOCATIONSTARTUrl: "https://backend-0f8w.onrender.com/api/location/start",
+  LOCATIONUPDATEUrl: "https://backend-0f8w.onrender.com/api/location/update",
+  LOCATIONSTOPUrl: "https://backend-0f8w.onrender.com/api/location/stop",
+  LOCATIONVIEWBaseUrl: "https://backend-0f8w.onrender.com/api/location",
+  TRACKPAGEBaseUrl: "https://frontend-sable-pi-82.vercel.app/track"
 }

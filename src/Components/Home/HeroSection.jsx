@@ -1,89 +1,60 @@
 import React from 'react'
 import Testimony from './Testimony'
-import Footer from '../Footer'
 
 function HeroSection() {
     return (
-        <div className='w-full p-3'>
-            <div className='w-full p-1 flex flex-col text-center md:flex-row md:justify-center md:items-center md:gap-2'>
-                <div className='w-full p-1 flex items-center justify-center text-center md:w-fit'>
-                    <h1 className='text-[#FE7678] font-sans text-4xl font-bold tracking-wide md:text-7xl'>One Brand</h1>
-                    <img className='h-11 ml-3 md:hidden' src="/star.svg" alt="" />
-                </div>
-
-                <div className='w-full p-1 flex items-center text-center justify-center md:w-fit'>
-                    <img className='h-8 mr-1 md:h-12' src="/Union-1.svg" alt="" />
-                    <h2 className='text-[#FE7678] font-sans text-4xl font-bold tracking-wide md:text-7xl'>Two Solutions</h2>
-                    <img className='hidden h-12 ml-3 md:block' src="/star.svg" alt="" />
-                </div>
-
+        <div className='w-full p-2'>
+            <div className='w-full py-6 flex flex-col text-center md:flex-row md:justify-center md:items-end md:gap-3'>
+                <h1 className='font-display text-display-sm md:text-display-lg text-ink'>One instrument.</h1>
+                <h2 className='font-display text-display-sm md:text-display-lg text-dusk'>Two modes.</h2>
             </div>
-            <div className='w-full p-1 text-center flex flex-col items-center mt-2 md:flex-row md:w-[95%]'>
-                <h1 className='font-[300] mb-2 md:font-[350]'>Empowering Women with Advanced Safety Technology - Your Personal Guardian That Never Sleeps, Ensuring Youre Protected Wherever Life Takes You.</h1>
-                <div className="flex items-center space-x-4">
-                    <div className="flex -space-x-4">
-                        <div className="w-12 h-12 rounded-full bg-pink-500 border-2 border-white overflow-hidden">
-                            <img src="/img1.png" alt="Profile 1" className="w-full h-full object-cover" />
+            <div className='w-full text-center flex flex-col items-center mt-2 md:flex-row md:text-left md:gap-6 md:items-center'>
+                <p className='text-body text-ink-soft mb-4 md:mb-0'>
+                    Calm while you move through the day. Unmistakable when you need help — a personal guardian that stays quiet until it should not.
+                </p>
+                <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex -space-x-3">
+                        <div className="w-11 h-11 rounded-full border-2 border-paper overflow-hidden bg-dusk-soft">
+                            <img src="/img1.png" alt="" className="w-full h-full object-cover" />
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-yellow-500 border-2 border-white overflow-hidden">
-                            <img src="/img2.png" alt="Profile 2" className="w-full h-full object-cover" />
+                        <div className="w-11 h-11 rounded-full border-2 border-paper overflow-hidden bg-sage-soft">
+                            <img src="/img2.png" alt="" className="w-full h-full object-cover" />
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-blue-500 border-2 border-white overflow-hidden">
-                            <img src="/img3.png" alt="Profile 3" className="w-full h-full object-cover" />
+                        <div className="w-11 h-11 rounded-full border-2 border-paper overflow-hidden bg-dusk-soft">
+                            <img src="/img3.png" alt="" className="w-full h-full object-cover" />
                         </div>
                     </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
                 </div>
             </div>
-            <div className='w-full p-1 md:flex flex-row items-center'>
-                <div className=' relative w-full p-1 mt-3 md:w-[49%]'>
-                    <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-black z-10 rounded-[10%] opacity-80 m-3">
-                        <div className='w-full p-8 flex gap-3 items-center justify-center'>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" className="h-6 w-6">
-                                <circle cx="12" cy="12" r="11" fill="white" />
-                                <circle cx="12" cy="12" r="11" fill="none" stroke="black" strokeWidth="1" />
-                                <g transform="scale(0.75) translate(4 4)">
-                                    <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke="black" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                                </g>
-                            </svg>
-                            <h1 className='font-sans text-sm text-white'>Learn More</h1>
-                        </div>
+            <div className='w-full mt-6'>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div className="card-surface p-4 text-center">
+                        <p className="text-heading text-ink">SOS Alert</p>
+                        <p className="text-caption text-ink-soft mt-1">One tap sends your location to your Trusted Circle</p>
                     </div>
-                    <img className="w-full object-contain object-center shadow-[0px_0px_14px_1px_#1a202c] rounded-[10%] relative" src="/img4.png" alt="" />
-
-                </div>
-
-                <div className=' relative w-full p-1 mt-3 md:w-[49%]'>
-                    <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-black z-10 rounded-[10%] opacity-80 m-3">
-                        <div className='w-full p-8 flex gap-3 items-center justify-center'>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" className="h-6 w-6">
-                                <circle cx="12" cy="12" r="11" fill="white" />
-                                <circle cx="12" cy="12" r="11" fill="none" stroke="black" strokeWidth="1" />
-                                <g transform="scale(0.75) translate(4 4)">
-                                    <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke="black" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                                </g>
-                            </svg>
-                            <h1 className='font-sans text-sm text-white'>Learn More</h1>
-                        </div>
+                    <div className="card-surface p-4 text-center">
+                        <p className="text-heading text-ink">Evidence Recording</p>
+                        <p className="text-caption text-ink-soft mt-1">Audio and video captured automatically during an alert</p>
                     </div>
-                    <img className="w-full object-contain object-center shadow-[0px_0px_14px_1px_#1a202c] rounded-[10%] relative" src="/img5.png" alt="" />
-
+                    <div className="card-surface p-4 text-center">
+                        <p className="text-heading text-ink">Voice Activation</p>
+                        <p className="text-caption text-ink-soft mt-1">Hands-free trigger with a spoken wake phrase</p>
+                    </div>
+                    <div className="card-surface p-4 text-center">
+                        <p className="text-heading text-ink">Live Location</p>
+                        <p className="text-caption text-ink-soft mt-1">Share your position in real time, for as long as you choose</p>
+                    </div>
                 </div>
             </div>
-            <div className='w-full p-2 text-center mt-3 flex items-center justify-center flex-col md:h-[60vh]'>
-                <h1 className="text-center font-medium text-2xl relative inline-block font-sans md:text-5xl">
-                    <span className="relative z-10">{`It's not just products`}</span>
-                    <span className="absolute left-0 top-1/2 w-[120%] h-0.5 md:h-1 bg-red-400 -translate-x-[10%] md:decoration-4"></span>
-                </h1>
-
-                <h1 className='text-center font-medium text-gray-700 text-2xl mt-3 md:text-5xl m-2 md:leading-normal'>It's our commitment <br></br>to meaningful solutions.</h1>
+            <div className='w-full py-16 text-center flex items-center justify-center flex-col'>
+                <p className="font-display text-display-sm text-ink">Quiet until it matters.</p>
+                <p className='text-body text-ink-soft mt-3 max-w-xl'>
+                    A commitment to being present — not a siren you learn to ignore.
+                </p>
             </div>
-            <div className='w-full p-1' id='testimony'>
+            <div className='w-full' id='testimony'>
                 <Testimony />
             </div>
-            
         </div>
     )
 }

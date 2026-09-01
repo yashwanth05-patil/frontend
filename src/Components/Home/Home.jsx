@@ -4,13 +4,9 @@ import Footer from '../Footer'
 
 function Home() {
   return (
-    <div className='w-full p-3 '>
-      <div className='w-full h-fit p-1'>
-       <HeroSection />
-      </div>
-      <div className='w-full p-1'>
-      <Footer/>
-      </div>
+    <div className='w-full px-4 py-4 bg-paper'>
+      <HeroSection />
+      <Footer />
     </div>
   )
 }

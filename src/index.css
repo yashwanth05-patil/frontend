@@ -2,6 +2,117 @@
 @tailwind components;
 @tailwind utilities;
 
-*::-webkit-scrollbar{
+@layer base {
+  html {
+    @apply bg-paper text-ink font-sans text-body antialiased;
+  }
+
+  body {
+    @apply min-h-screen bg-paper text-ink;
+  }
+
+  *::-webkit-scrollbar {
     display: none;
+  }
+
+  * {
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 min-h-touch px-5 py-2.5 rounded-btn bg-dusk text-paper-raised text-body font-medium transition-opacity duration-page hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 min-h-touch px-5 py-2.5 rounded-btn bg-paper-raised text-dusk text-body font-medium border-[1.5px] border-dusk transition-colors duration-page hover:bg-dusk-soft disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 min-h-touch min-w-touch px-3 py-2 rounded-btn text-ink-soft text-caption font-medium transition-colors duration-page hover:bg-slate-line hover:text-ink;
+  }
+
+  .card-surface {
+    @apply bg-paper-raised border border-slate-line rounded-card;
+  }
+
+  .card-surface-press {
+    @apply card-surface active:shadow-press;
+  }
+
+  .field-input {
+    @apply block w-full min-h-touch px-3 py-2.5 rounded-btn border border-slate bg-paper-raised text-ink text-body placeholder:text-ink-soft/60 focus:outline-none focus:border-dusk;
+  }
+
+  .field-label {
+    @apply block text-caption text-ink-soft mb-1.5;
+  }
+
+  .badge-sage {
+    @apply inline-flex items-center rounded-pill px-3 py-1 text-caption text-sage bg-sage-soft;
+  }
+
+  .badge-dusk {
+    @apply inline-flex items-center rounded-pill px-3 py-1 text-caption text-dusk bg-dusk-soft;
+  }
+
+  .badge-signal {
+    @apply inline-flex items-center rounded-pill px-3 py-1 text-caption text-signal bg-signal-soft;
+  }
+
+  .mono-readout {
+    @apply font-mono text-mono-data text-ink-soft tracking-[0.02em] uppercase;
+  }
+
+  .page-shell {
+    @apply w-full min-h-full bg-paper text-ink pb-28 px-4;
+  }
+
+  .page-shell-alert {
+    @apply bg-signal-soft;
+  }
+}
+
+/* Vigil Ring motion — personality budget lives here */
+@keyframes vigil-breathe {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes vigil-quicken {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+@keyframes vigil-sonar {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+.vigil-breathe {
+  animation: vigil-breathe 4s ease-in-out infinite;
+}
+
+.vigil-quicken {
+  animation: vigil-quicken 1.5s ease-in-out infinite;
+}
+
+.vigil-sonar {
+  animation: vigil-sonar 1.2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vigil-breathe,
+  .vigil-quicken,
+  .vigil-sonar {
+    animation: none;
+    opacity: 0.75;
+  }
 }

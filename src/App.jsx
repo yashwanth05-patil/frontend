@@ -10,54 +10,58 @@ import Map from "./Components/Map"
 import Reviews from "./Components/Reviews"
 import Profile from "./Components/Profile"
 import Settings from "./Components/Settings"
-import { useContext } from "react"
-import { AuthContext } from "./Context/AuthContext"
+import LiveTrack from "./Components/Home/LiveTrack"
 import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
-  const { auth } = useContext(AuthContext)
-
-
   return (
     <BrowserRouter>
-      <div className="flex flex-col min-h-screen max-w-[85rem] mx-auto">
-        <Navbar />
-        <main className="flex-1 pt-[7px]">
-          <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='/login' element={<Login />} />
-            <Route path='/register' element={<Signup />} />
-            <Route path='/HomePage'
-              element=
-              {
+      <div className="min-h-screen bg-paper text-ink font-sans">
+        <div className="flex flex-col min-h-screen max-w-[85rem] mx-auto">
+          <Navbar />
+          <main className="flex-1">
+            <Routes>
+              <Route path='/' element={<Home />} />
+              <Route path='/login' element={<Login />} />
+              <Route path='/register' element={<Signup />} />
+              <Route path='/track/:shareId' element={<LiveTrack />} />
+              <Route path='/HomePage'
+                element=
+                {
+                  <ProtectedRoute>
+                    <AfterLogin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/map" element={
                 <ProtectedRoute>
-                  <AfterLogin />
+                  <Map />
                 </ProtectedRoute>
-              }
-            />
-            <Route path="/map" element={
-              <ProtectedRoute>
-                <Map />
-              </ProtectedRoute>
-            } />
-            <Route path="/reviews" element={
-              <ProtectedRoute>
-                <Reviews />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </main>
-        <ToastContainer />
+              } />
+              <Route path="/reviews" element={
+                <ProtectedRoute>
+                  <Reviews />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </main>
+          <ToastContainer
+            position="top-center"
+            theme="light"
+            toastClassName="!font-sans"
+          />
+        </div>
       </div>
     </BrowserRouter>
   )

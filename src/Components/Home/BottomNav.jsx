@@ -1,44 +1,36 @@
 import React from 'react'
-import { Home, Map, MessageSquare, User } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Home, Map, Star, User } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+
+const items = [
+  { to: '/HomePage', label: 'Home', icon: Home },
+  { to: '/map', label: 'Map', icon: Map },
+  { to: '/reviews', label: 'Reviews', icon: Star },
+  { to: '/profile', label: 'Profile', icon: User },
+]
 
 function BottomNav() {
   return (
-    <div className="w-full sticky bottom-0 z-20 bg-white shadow-lg md:flex md:items-center md:justify-center">
-        <div className="w-full border-2 border-red-300 rounded-lg p-4 flex items-center justify-between md:w-[50%]">
-          <Link
-            to={"/HomePage"}
-            className="flex items-center justify-center flex-col gap-2 hover:text-red-500 transition-colors"
-          >
-            <Home className="w-5 h-5 text-red-400" />
-            <span className="font-medium text-sm text-gray-600">Home</span>
-          </Link>
-
-          <Link
-            to={"/map"}
-            className="flex items-center justify-center flex-col gap-2 hover:text-red-500 transition-colors"
-          >
-            <Map className="w-5 h-5 text-red-400" />
-            <span className="font-medium text-sm text-gray-600">Map</span>
-          </Link>
-
-          <Link
-            to={"/reviews"}
-            className="flex items-center justify-center flex-col gap-2 hover:text-red-500 transition-colors"
-          >
-            <MessageSquare className="w-5 h-5 text-red-400" />
-            <span className="font-medium text-sm text-gray-600">Reviews</span>
-          </Link>
-
-          <Link
-            to={"/profile"}
-            className="flex items-center justify-center flex-col gap-2 hover:text-red-500 transition-colors"
-          >
-            <User className="w-5 h-5 text-red-400" />
-            <span className="font-medium text-sm text-gray-600">Profile</span>
-          </Link>
+    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center px-4">
+      <nav className="pointer-events-auto w-full max-w-md rounded-pill border border-slate-line bg-paper-raised/95 shadow-nav backdrop-blur-sm px-2 py-2">
+        <div className="flex items-center justify-between">
+          {items.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex min-h-touch min-w-touch flex-1 flex-col items-center justify-center gap-0.5 rounded-pill px-2 py-1 text-caption transition-colors duration-page ${
+                  isActive ? 'text-dusk bg-dusk-soft' : 'text-ink-soft hover:text-ink'
+                }`
+              }
+            >
+              <Icon className="w-5 h-5" strokeWidth={1.75} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
         </div>
-      </div>
+      </nav>
+    </div>
   )
 }
 

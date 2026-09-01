@@ -19,17 +19,24 @@ export function useSOSRecorder() {
   const [status, setStatus] = useState('idle'); // idle | recording | uploading | done | error
   const [evidenceUrl, setEvidenceUrl] = useState(null);
   const [error, setError] = useState(null);
+  const [secondsRemaining, setSecondsRemaining] = useState(null);
 
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
   const timeoutRef = useRef(null);
+  const countdownIntervalRef = useRef(null);
 
   const cleanupStream = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+  };
+
+  const stopCountdown = () => {
+    clearInterval(countdownIntervalRef.current);
+    countdownIntervalRef.current = null;
   };
 
   const uploadClip = useCallback(async (blob, mediaType, userId) => {
@@ -100,6 +107,8 @@ export function useSOSRecorder() {
         recorder.onstop = async () => {
           cleanupStream();
           clearTimeout(timeoutRef.current);
+          stopCountdown();
+          setSecondsRemaining(null);
           const blob = new Blob(chunksRef.current, { type: mediaType === 'video' ? 'video/webm' : 'audio/webm' });
           const url = await uploadClip(blob, mediaType, userId);
           resolve(url);
@@ -107,6 +116,17 @@ export function useSOSRecorder() {
 
         recorder.start();
         setStatus('recording');
+
+        // Live countdown so the UI can show a real ticking "30, 29, 28..."
+        // instead of a static label.
+        const totalSeconds = Math.round(MAX_DURATION_MS / 1000);
+        setSecondsRemaining(totalSeconds);
+        let remaining = totalSeconds;
+        countdownIntervalRef.current = setInterval(() => {
+          remaining -= 1;
+          setSecondsRemaining(Math.max(remaining, 0));
+          if (remaining <= 0) stopCountdown();
+        }, 1000);
 
         // Auto-stop safety net so a forgotten recording doesn't run forever.
         timeoutRef.current = setTimeout(() => {
@@ -125,5 +145,5 @@ export function useSOSRecorder() {
     }
   }, []);
 
-  return { status, evidenceUrl, error, startRecording, stopRecording, maxDurationMs: MAX_DURATION_MS };
+  return { status, evidenceUrl, error, secondsRemaining, startRecording, stopRecording, maxDurationMs: MAX_DURATION_MS };
 }
