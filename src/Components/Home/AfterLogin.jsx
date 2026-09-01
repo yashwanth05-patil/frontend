@@ -10,6 +10,8 @@ import Loader from './Loader';
 import { toast } from "react-toastify"
 import { useSOSRecorder } from './useSOSRecorder';
 import { useVoiceActivation } from './useVoiceActivation';
+import { useLiveLocationShare } from './useLiveLocationShare';
+import { MapPin, Copy, Share2, XCircle } from 'lucide-react';
 
 function formatClock(date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -27,7 +29,7 @@ function AfterLogin() {
   const [clock, setClock] = useState(() => formatClock(new Date()));
   const [alertActive, setAlertActive] = useState(false);
 
-  const { status: recordingStatus, startRecording, stopRecording, abortRecording, maxDurationMs } = useSOSRecorder();
+  const { status: recordingStatus, startRecording, stopRecording, maxDurationMs, secondsRemaining } = useSOSRecorder();
 
   const sendEvidenceLink = async (evidenceUrl) => {
     if (!evidenceUrl || !contactsdata || contactsdata.length === 0) return;
@@ -77,6 +79,68 @@ function AfterLogin() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const {
+    status: shareStatus,
+    mode: shareMode,
+    shareId,
+    expiresAt: shareExpiresAt,
+    error: shareError,
+    startSharing,
+    stopSharing,
+  } = useLiveLocationShare();
+  const [shareCountdown, setShareCountdown] = useState(null);
+
+  useEffect(() => {
+    if (!shareExpiresAt) {
+      setShareCountdown(null);
+      return undefined;
+    }
+    const tick = () => {
+      const msLeft = new Date(shareExpiresAt).getTime() - Date.now();
+      if (msLeft <= 0) {
+        setShareCountdown('0:00');
+        return;
+      }
+      const totalSeconds = Math.floor(msLeft / 1000);
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      setShareCountdown(`${mins}:${secs.toString().padStart(2, '0')}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [shareExpiresAt]);
+
+  const trackLink = shareId ? `${Config.TRACKPAGEBaseUrl}/${shareId}` : null;
+
+  const handleShareLocation = async (mode) => {
+    const result = await startSharing(user?._id, user?.username || 'Someone', mode);
+    if (result) {
+      toast.success(
+        mode === 'once' ? 'Current location ready to share' : 'Live location sharing started'
+      );
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (!trackLink) return;
+    navigator.clipboard.writeText(trackLink);
+    toast.success('Link copied');
+  };
+
+  const handleNativeShare = async () => {
+    if (!trackLink) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'My location', url: trackLink });
+      } catch {
+        // User cancelled the share sheet - not an error worth surfacing.
+      }
+    } else {
+      handleCopyLink();
+    }
+  };
 
   useEffect(() => {
     setContactsdata(Array.isArray(user?.contacts) ? user.contacts : []);
@@ -240,14 +304,6 @@ function AfterLogin() {
     }
   };
 
-  // Cancel an active SOS: stop any evidence recording and drop the live UI state.
-  const handleCancelAlert = () => {
-    abortRecording();
-    setAlertActive(false);
-    if (voiceListening) stopVoiceActivation();
-    toast.info('Alert cancelled');
-  };
-
   const ringState = useMemo(() => {
     if (alertActive || recordingStatus === 'recording' || recordingStatus === 'uploading') {
       return 'triggered';
@@ -259,7 +315,7 @@ function AfterLogin() {
   const dialCaption = recordingStatus === 'uploading'
     ? 'ALERT SENT · UPLOADING'
     : recordingStatus === 'recording'
-      ? 'ALERT LIVE · SHARING LOCATION + AUDIO'
+      ? 'ALERT SENT · RECORDING'
       : ringState === 'armed'
         ? 'LISTENING FOR “EMERGENCY”...'
         : undefined;
@@ -276,21 +332,19 @@ function AfterLogin() {
         </div>
 
         {locationError && (
-          <p className="mb-4 text-center text-caption text-amber">{locationError}</p>
+          <p className="mb-4 text-center text-caption text-dusk">{locationError}</p>
         )}
 
         <GuardianDial
           ringState={ringState}
           caption={dialCaption}
-          activeLabel="ALERT LIVE · SHARING LOCATION + AUDIO"
           onHoldComplete={handleSOS}
-          onCancel={handleCancelAlert}
         />
 
         {recordingStatus === 'recording' && (
           <div className="mt-2 flex flex-col items-center gap-2">
             <span className="badge-signal">
-              Recording · auto-stops in {Math.round(maxDurationMs / 1000)}s
+              Recording · auto-stops in {secondsRemaining ?? Math.round(maxDurationMs / 1000)}s
             </span>
             <button type="button" onClick={stopRecording} className="btn-secondary text-caption">
               <StopCircle className="w-4 h-4" />
@@ -306,10 +360,10 @@ function AfterLogin() {
               onClick={voiceListening ? stopVoiceActivation : startVoiceActivation}
               className={`inline-flex items-center gap-2 min-h-touch rounded-pill px-3.5 py-1.5 text-caption transition-colors duration-page ${
                 voiceStage === 'armed'
-                  ? 'bg-amber-soft text-amber'
+                  ? 'bg-dusk-soft text-dusk'
                   : voiceListening
-                    ? 'bg-teal-soft text-teal'
-                    : 'bg-panel-raised text-mist-soft border border-slate'
+                    ? 'bg-sage-soft text-sage'
+                    : 'bg-paper-raised text-ink-soft border border-slate-line'
               }`}
               title={voiceListening ? 'Turn off voice activation' : 'Enable hands-free voice activation'}
             >
@@ -321,14 +375,68 @@ function AfterLogin() {
                   : 'Voice: off'}
             </button>
             {voiceError && (
-              <p className="text-center text-caption text-amber max-w-xs">{voiceError}</p>
+              <p className="text-center text-caption text-dusk max-w-xs">{voiceError}</p>
             )}
           </div>
         )}
 
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-heading text-ink flex items-center gap-1.5">
+              <MapPin className="w-4 h-4" /> Live Location
+            </h2>
+          </div>
+
+          {shareStatus !== 'active' && (
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => handleShareLocation('once')} className="btn-secondary text-caption">
+                Current location
+              </button>
+              <button type="button" onClick={() => handleShareLocation('15min')} className="btn-secondary text-caption">
+                Share for 15 min
+              </button>
+              <button type="button" onClick={() => handleShareLocation('30min')} className="btn-secondary text-caption">
+                Share for 30 min
+              </button>
+              <button type="button" onClick={() => handleShareLocation('untilOff')} className="btn-secondary text-caption">
+                Until I turn it off
+              </button>
+            </div>
+          )}
+
+          {shareError && (
+            <p className="mt-2 text-center text-caption text-dusk">{shareError}</p>
+          )}
+
+          {shareStatus === 'active' && (
+            <div className="card-surface p-4">
+              <p className="mono-readout">
+                {shareMode === 'once'
+                  ? 'LOCATION READY TO SHARE'
+                  : shareMode === 'untilOff'
+                    ? 'LIVE · SHARING UNTIL YOU STOP'
+                    : `LIVE · STOPS IN ${shareCountdown || '…'}`}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" onClick={handleNativeShare} className="btn-primary text-caption flex items-center gap-1.5">
+                  <Share2 className="w-4 h-4" /> Send link
+                </button>
+                <button type="button" onClick={handleCopyLink} className="btn-secondary text-caption flex items-center gap-1.5">
+                  <Copy className="w-4 h-4" /> Copy link
+                </button>
+                {shareMode !== 'once' && (
+                  <button type="button" onClick={stopSharing} className="btn-secondary text-caption flex items-center gap-1.5">
+                    <XCircle className="w-4 h-4" /> Stop sharing
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+
         <section className="mt-10">
           <div className="flex items-baseline justify-between mb-4">
-            <h2 className="text-heading text-mist">Trusted Circle</h2>
+            <h2 className="text-heading text-ink">Trusted Circle</h2>
             <span className="mono-readout">{contactsdata.length}/3</span>
           </div>
 
@@ -338,12 +446,12 @@ function AfterLogin() {
                 key={contact._id || index}
                 type="button"
                 onClick={() => setSelectedContact(contact)}
-                className="relative min-h-touch min-w-touch -ml-3 first:ml-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber rounded-full"
+                className="relative min-h-touch min-w-touch -ml-3 first:ml-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-dusk rounded-full"
                 style={{ zIndex: contactsdata.length - index }}
                 aria-label={contact.name}
               >
                 <img
-                  className="h-16 w-16 rounded-full object-cover border-2 border-panel"
+                  className="h-16 w-16 rounded-full object-cover border-2 border-paper"
                   src={contact.photo}
                   alt=""
                 />
@@ -354,7 +462,7 @@ function AfterLogin() {
               type="button"
               onClick={() => setShowAddContact(true)}
               disabled={contactsdata.length >= 3}
-              className={`relative -ml-1 flex h-16 w-16 min-h-touch min-w-touch items-center justify-center rounded-full border border-dashed border-amber text-amber bg-amber-soft ${
+              className={`relative -ml-1 flex h-16 w-16 min-h-touch min-w-touch items-center justify-center rounded-full border border-dashed border-dusk text-dusk bg-dusk-soft ${
                 contactsdata.length >= 3 ? 'opacity-40 cursor-not-allowed' : ''
               }`}
               aria-label="Add to Trusted Circle"
@@ -365,19 +473,19 @@ function AfterLogin() {
 
           <div className="mt-3 flex justify-center gap-4 flex-wrap">
             {contactsdata.map((contact) => (
-              <span key={`label-${contact._id}`} className="text-caption text-mist-soft">
+              <span key={`label-${contact._id}`} className="text-caption text-ink-soft">
                 {contact.name}
               </span>
             ))}
           </div>
 
           {contactsdata.length === 0 && (
-            <p className="mt-4 text-center text-body text-mist-soft">
+            <p className="mt-4 text-center text-body text-ink-soft">
               No one in your Trusted Circle yet — add someone who should know if you need help.
             </p>
           )}
           {contactsdata.length >= 3 && (
-            <p className="mt-3 text-center text-caption text-mist-soft">
+            <p className="mt-3 text-center text-caption text-ink-soft">
               Trusted Circle is full (3 people). Remove someone to add another.
             </p>
           )}
@@ -385,22 +493,22 @@ function AfterLogin() {
       </div>
 
       {showLoader && (
-        <div className="fixed inset-0 flex items-center justify-center bg-ink/60 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-ink/30 z-50">
           <Loader />
         </div>
       )}
 
       {selectedContact && (
-        <div className="fixed inset-0 bg-ink/70 flex items-end sm:items-center justify-center p-4 z-40">
+        <div className="fixed inset-0 bg-ink/40 flex items-end sm:items-center justify-center p-4 z-40">
           <div className="card-surface w-full max-w-lg p-6">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <img className="h-14 w-14 rounded-full object-cover" src={selectedContact.photo} alt="" />
                 <div>
-                  <h3 className="text-heading text-mist">{selectedContact.name}</h3>
+                  <h3 className="text-heading">{selectedContact.name}</h3>
                   <p className="mono-readout normal-case tracking-normal">{selectedContact.MobileNo}</p>
                   {selectedContact.email && (
-                    <p className="text-caption text-mist-soft">{selectedContact.email}</p>
+                    <p className="text-caption text-ink-soft">{selectedContact.email}</p>
                   )}
                 </div>
               </div>
@@ -420,10 +528,10 @@ function AfterLogin() {
       )}
 
       {showAddContact && (
-        <div className="fixed inset-0 bg-ink/70 flex items-end sm:items-center justify-center p-4 z-40">
+        <div className="fixed inset-0 bg-ink/40 flex items-end sm:items-center justify-center p-4 z-40">
           <div className="card-surface max-w-lg w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-heading text-mist">Add to Trusted Circle</h2>
+              <h2 className="text-heading">Add to Trusted Circle</h2>
               <button type="button" className="btn-ghost" onClick={() => setShowAddContact(false)} aria-label="Close">
                 <X className="h-5 w-5" />
               </button>

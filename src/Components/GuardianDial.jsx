@@ -7,17 +7,13 @@ function GuardianDial({
   caption,
   disabled = false,
   onHoldComplete,
-  onCancel,
-  activeLabel,
 }) {
   const [holding, setHolding] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [remainingMs, setRemainingMs] = useState(HOLD_MS)
   const startRef = useRef(0)
   const rafRef = useRef(null)
   const completedRef = useRef(false)
 
-  // Live state — red. Everything else amber. Red is reserved exclusively for live SOS.
   const visual = ringState === 'triggered'
     ? 'triggered'
     : holding
@@ -29,7 +25,6 @@ function GuardianDial({
     rafRef.current = null
     setHolding(false)
     setProgress(0)
-    setRemainingMs(HOLD_MS)
     startRef.current = 0
   }, [])
 
@@ -37,7 +32,6 @@ function GuardianDial({
     const elapsed = performance.now() - startRef.current
     const next = Math.min(elapsed / HOLD_MS, 1)
     setProgress(next)
-    setRemainingMs(Math.max(0, Math.ceil((HOLD_MS - elapsed) / 1000)))
     if (next >= 1) {
       completedRef.current = true
       clearHold()
@@ -73,39 +67,36 @@ function GuardianDial({
     }
   }, [ringState, clearHold])
 
-  const isLive = visual === 'triggered'
-
-  const ringColor = isLive
+  const ringColor = visual === 'triggered'
     ? 'border-signal'
-    : 'border-amber'
-
-  const ringAnim = isLive
-    ? 'shadow-dial-live'
     : visual === 'arming' || visual === 'armed'
-      ? 'vigil-quicken border-amber shadow-dial-glow'
-      : 'vigil-breathe border-amber shadow-dial-glow'
+      ? 'border-dusk'
+      : 'border-sage'
 
-  const centerFill = isLive
-    ? 'bg-signal text-mist'
-    : 'bg-panel-raised text-amber'
+  const ringAnim = visual === 'triggered'
+    ? ''
+    : visual === 'arming' || visual === 'armed'
+      ? 'vigil-quicken'
+      : 'vigil-breathe'
 
-  const progressColor = isLive ? '#E5484D' : '#E8A33D'
+  const centerFill = visual === 'triggered'
+    ? 'bg-signal text-paper-raised'
+    : 'bg-paper-raised text-ink'
 
-  const dotColor = isLive ? 'bg-signal' : 'bg-amber'
-
-  const statusLabel = isLive
-    ? (caption || 'ALERT LIVE · SHARING LOCATION + AUDIO')
-    : visual === 'arming'
-      ? `HOLD ${remainingMs}s · RELEASE TO CANCEL`
-      : visual === 'armed'
-        ? caption || 'LISTENING FOR “EMERGENCY”…'
-        : caption || 'HOLD TO ARM ALERT'
+  const statusLabel = caption || (
+    visual === 'triggered'
+      ? 'ALERT SENT · RECORDING'
+      : visual === 'arming'
+        ? 'HOLD TO SEND ALERT…'
+        : visual === 'armed'
+          ? 'LISTENING FOR “EMERGENCY”...'
+          : 'HOLD TO SEND ALERT'
+  )
 
   return (
     <div className="flex flex-col items-center gap-4 select-none">
       <div className="relative w-[232px] h-[232px] md:w-[260px] md:h-[260px]">
-        {/* One sonar pulse only when live, then it fades out and stays off */}
-        {isLive && (
+        {visual === 'triggered' && (
           <span
             aria-hidden="true"
             className="vigil-sonar pointer-events-none absolute inset-0 rounded-full border-2 border-signal"
@@ -116,7 +107,6 @@ function GuardianDial({
           className={`absolute inset-0 rounded-full border-[3px] ${ringColor} ${ringAnim}`}
         />
 
-        {/* Clockwise amber progress while arming */}
         {holding && (
           <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
             <circle
@@ -124,7 +114,7 @@ function GuardianDial({
               cy="50"
               r="46"
               fill="none"
-              stroke={progressColor}
+              stroke="#5B5F97"
               strokeWidth="3.5"
               strokeLinecap="round"
               strokeDasharray={`${progress * 289} 289`}
@@ -132,55 +122,35 @@ function GuardianDial({
           </svg>
         )}
 
-        {!isLive && (
+        {visual !== 'triggered' && (
           <span
-            className={`pointer-events-none absolute left-1/2 top-3 h-2 w-2 -translate-x-1/2 rounded-full motion-reduce:opacity-100 ${dotColor}`}
+            className={`pointer-events-none absolute left-1/2 top-3 h-2 w-2 -translate-x-1/2 rounded-full motion-reduce:opacity-100 ${
+              visual === 'armed' || visual === 'arming' ? 'bg-dusk' : 'bg-sage'
+            }`}
           />
         )}
 
         <button
           type="button"
-          disabled={disabled || isLive}
-          aria-label="Hold to arm emergency alert"
-          className={`absolute inset-[18px] rounded-full ${centerFill} font-display text-display-sm tracking-wide transition-all duration-page ease-page focus:outline-none focus-visible:ring-2 focus-visible:ring-amber ${
-            isLive ? 'cursor-default shadow-dial-live' : ''
-          }`}
+          disabled={disabled || ringState === 'triggered'}
+          aria-label="Hold to send emergency alert"
+          className={`absolute inset-[18px] rounded-full ${centerFill} font-display text-display-sm tracking-wide transition-colors duration-page focus:outline-none focus-visible:ring-2 focus-visible:ring-dusk`}
           onPointerDown={(event) => {
-            if (isLive) return
             event.currentTarget.setPointerCapture?.(event.pointerId)
             beginHold(event)
           }}
-          onPointerUp={isLive ? undefined : cancelHold}
-          onPointerCancel={isLive ? undefined : cancelHold}
+          onPointerUp={cancelHold}
+          onPointerCancel={cancelHold}
           onContextMenu={(event) => event.preventDefault()}
           style={{ touchAction: 'none' }}
         >
-          {isLive ? 'LIVE' : 'SOS'}
+          SOS
         </button>
       </div>
 
       <p className="mono-readout text-center min-h-[1.4em] px-4">
         {statusLabel}
       </p>
-
-      {/* Persistent alert strip while SOS is live — red is only here */}
-      {isLive && (
-        <div className="w-full max-w-sm rounded-panel bg-panel border border-signal/50 px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="h-2 w-2 rounded-full bg-signal animate-pulse shrink-0" />
-            <span className="mono-readout text-signal truncate">
-              {activeLabel || 'ALERT LIVE · SHARING LOCATION + AUDIO'}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="shrink-0 min-h-touch min-w-touch rounded-btn border border-signal/50 px-3 text-caption text-mist transition-colors duration-page hover:bg-signal-soft"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
     </div>
   )
 }

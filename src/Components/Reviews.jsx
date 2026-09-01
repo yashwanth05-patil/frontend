@@ -86,7 +86,7 @@ function Reviews() {
                 <div className="flex items-center justify-between gap-3">
                     <div>
                         <p className="mono-readout mb-1">FIELD NOTES</p>
-                        <h1 className="text-heading text-mist">
+                        <h1 className="text-heading text-ink">
                             Hello, {user?.username}
                         </h1>
                     </div>
@@ -102,7 +102,7 @@ function Reviews() {
 
                 <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist-soft" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-soft" />
                         <input
                             type="text"
                             value={searchQuery}
@@ -117,7 +117,7 @@ function Reviews() {
                 </form>
 
                 {isLoading && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-ink/60 z-50">
+                    <div className="fixed inset-0 flex items-center justify-center bg-ink/30 z-50">
                         <Loader />
                     </div>
                 )}
@@ -132,17 +132,17 @@ function Reviews() {
                                         {new Date(review.createdAt).toLocaleDateString()}
                                     </span>
                                 </div>
-                                <h3 className="text-heading text-mist mb-2">{review.title}</h3>
-                                <p className="text-body text-mist-soft">{review.review}</p>
-                                <p className="mt-4 text-caption text-mist-soft">
-                                    By <span className="text-mist">{review.user?.username || 'Anonymous'}</span>
+                                <h3 className="text-heading text-ink mb-2">{review.title}</h3>
+                                <p className="text-body text-ink-soft">{review.review}</p>
+                                <p className="mt-4 text-caption text-ink-soft">
+                                    By <span className="text-ink">{review.user?.username || 'Anonymous'}</span>
                                 </p>
                             </article>
                         ))
                     ) : (
                         <div className="card-surface min-h-[280px] flex flex-col items-center justify-center gap-3 p-8 text-center">
-                            <Star className="h-6 w-6 text-amber" />
-                            <p className="text-body text-mist-soft">
+                            <Star className="h-6 w-6 text-dusk" />
+                            <p className="text-body text-ink-soft">
                                 No notes yet — add the first one for a place you know.
                             </p>
                             <button type="button" onClick={() => setShowAddReview(true)} className="btn-secondary">
@@ -154,10 +154,10 @@ function Reviews() {
             </div>
 
             {showAddReview && (
-                <div className="fixed inset-0 bg-ink/70 flex items-end sm:items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-ink/40 flex items-end sm:items-center justify-center p-4 z-50">
                     <div className="card-surface max-w-lg w-full p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-heading text-mist">Add a place note</h2>
+                            <h2 className="text-heading">Add a place note</h2>
                             <button type="button" className="btn-ghost" onClick={() => setShowAddReview(false)} aria-label="Close">
                                 <X className="w-5 h-5" />
                             </button>

@@ -79,12 +79,12 @@ function Login() {
     });
 
     return (
-        <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-ink p-4">
+        <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-paper p-4">
             <div className="w-full max-w-md">
                 <div className="mb-8 text-center">
                     <p className="mono-readout mb-3">SIGN IN</p>
-                    <h1 className="font-display text-display-sm text-mist mb-2">Welcome back</h1>
-                    <p className="text-body text-mist-soft">Enter your details to continue watching over your circle.</p>
+                    <h1 className="font-display text-display-sm text-ink mb-2">Welcome back</h1>
+                    <p className="text-body text-ink-soft">Enter your details to continue watching over your circle.</p>
                 </div>
 
                 <form onSubmit={handleSubmit(Submit)} className="card-surface p-6 space-y-5">
@@ -99,9 +99,9 @@ function Login() {
                     </button>
 
                     <div className="relative flex py-1 items-center">
-                        <div className="flex-grow border-t border-slate"></div>
-                        <span className="flex-shrink mx-4 text-caption text-mist-soft">or</span>
-                        <div className="flex-grow border-t border-slate"></div>
+                        <div className="flex-grow border-t border-slate-line"></div>
+                        <span className="flex-shrink mx-4 text-caption text-ink-soft">or</span>
+                        <div className="flex-grow border-t border-slate-line"></div>
                     </div>
 
                     <div>
@@ -137,23 +137,23 @@ function Login() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-touch min-w-touch text-mist-soft"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-touch min-w-touch text-ink-soft"
                                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                             >
                                 {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                             </button>
                         </div>
                         {errors && (
-                            <p className="mt-2 text-caption text-amber">{typeof errors === 'string' ? errors : ''}</p>
+                            <p className="mt-2 text-caption text-dusk">{typeof errors === 'string' ? errors : ''}</p>
                         )}
                     </div>
 
                     <div className="flex items-center justify-between gap-3">
-                        <label className="flex items-center text-caption text-mist-soft">
-                            <input type="checkbox" className="mr-2 accent-amber" />
+                        <label className="flex items-center text-caption text-ink-soft">
+                            <input type="checkbox" className="mr-2 accent-dusk" />
                             Remember me
                         </label>
-                        <a href="/forgot-password" className="text-caption text-amber">
+                        <a href="/forgot-password" className="text-caption text-dusk">
                             Forgot password
                         </a>
                     </div>
@@ -162,9 +162,9 @@ function Login() {
                         {isLoading ? 'Signing in…' : 'Sign in'}
                     </button>
 
-                    <p className="text-center text-caption text-mist-soft">
-                        Don't have an account?{' '}
-                        <Link to="/register" className="text-amber font-medium">
+                    <p className="text-center text-caption text-ink-soft">
+                        Don&apos;t have an account?{' '}
+                        <Link to="/register" className="text-dusk font-medium">
                             Create one
                         </Link>
                     </p>
