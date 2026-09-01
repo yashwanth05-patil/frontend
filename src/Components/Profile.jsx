@@ -10,7 +10,7 @@ import { Config } from '../../API/Config'
 
 const ProfileSection = ({ title, children }) => (
   <div className="card-surface overflow-hidden">
-    <h2 className="text-heading text-ink p-4 border-b border-slate-line">{title}</h2>
+    <h2 className="text-heading text-mist p-4 border-b border-slate">{title}</h2>
     {children}
   </div>
 )
@@ -109,11 +109,11 @@ function Profile() {
             <img
               src={user?.profilePhoto ? user.profilePhoto : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvFbJHIvlkPWSvsJ1rWRbr64ZPiCCdb1SCLg&s"}
               alt=""
-              className="w-20 h-20 rounded-full object-cover border border-slate-line"
+              className="w-20 h-20 rounded-full object-cover border border-slate"
             />
             <button
               type="button"
-              className="absolute bottom-0 right-0 bg-dusk p-1.5 rounded-full text-paper-raised min-h-[32px] min-w-[32px]"
+              className="absolute bottom-0 right-0 bg-amber p-1.5 rounded-full text-ink min-h-[32px] min-w-[32px]"
               onClick={() => setShowPhotoModal(true)}
               aria-label="Update photo"
             >
@@ -123,7 +123,7 @@ function Profile() {
 
           <div className="flex-1 min-w-0">
             <h2 className="text-heading truncate">{user?.username}</h2>
-            <p className="text-caption text-ink-soft truncate">{user?.email}</p>
+            <p className="text-caption text-mist-soft truncate">{user?.email}</p>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ function Profile() {
           {reviews.length > 0 ? reviews.map((review, index) => (
             <ReviewCard key={index} {...review} username={user.username} />
           )) : (
-            <p className="p-4 text-body text-ink-soft">No notes yet — they will appear here after you add one.</p>
+            <p className="p-4 text-body text-mist-soft">No notes yet — they will appear here after you add one.</p>
           )}
         </ProfileSection>
 
@@ -142,7 +142,7 @@ function Profile() {
       </div>
 
       {showPhotoModal && (
-        <div className="fixed inset-0 bg-ink/40 flex items-end sm:items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-ink/70 flex items-end sm:items-center justify-center p-4 z-50">
           <div className="card-surface max-w-lg w-full p-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="flex justify-between items-center">
@@ -162,7 +162,7 @@ function Profile() {
                         reset({ photo: null });
                         setPreviewUrl(null);
                       }}
-                      className="absolute top-0 right-0 bg-dusk rounded-full p-1 text-paper-raised"
+                      className="absolute top-0 right-0 bg-amber rounded-full p-1 text-ink"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -171,7 +171,7 @@ function Profile() {
                   <button
                     type="button"
                     onClick={() => document.getElementById('photo-upload').click()}
-                    className="w-32 h-32 mx-auto border border-dashed border-dusk rounded-full flex items-center justify-center text-dusk"
+                    className="w-32 h-32 mx-auto border border-dashed border-amber rounded-full flex items-center justify-center text-amber"
                   >
                     <Camera className="w-8 h-8" />
                   </button>
@@ -186,7 +186,7 @@ function Profile() {
                     onChange: handleFileChange
                   })}
                 />
-                <p className="text-caption text-ink-soft text-center">
+                <p className="text-caption text-mist-soft text-center">
                   Tap to {previewUrl ? 'change' : 'upload'} a photo
                 </p>
               </div>

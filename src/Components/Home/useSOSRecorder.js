@@ -125,5 +125,25 @@ export function useSOSRecorder() {
     }
   }, []);
 
-  return { status, evidenceUrl, error, startRecording, stopRecording, maxDurationMs: MAX_DURATION_MS };
+  // Aborts an in-progress recording without uploading the partial clip.
+  // Used by the Guardian Dial's Cancel action so the user can back out of
+  // a live SOS they armed by mistake.
+  const abortRecording = useCallback(() => {
+    clearTimeout(timeoutRef.current);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.onstop = null;
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {
+        // recorder may already be stopping - ignore
+      }
+    }
+    chunksRef.current = [];
+    cleanupStream();
+    setEvidenceUrl(null);
+    setError(null);
+    setStatus('idle');
+  }, []);
+
+  return { status, evidenceUrl, error, startRecording, stopRecording, abortRecording, maxDurationMs: MAX_DURATION_MS };
 }

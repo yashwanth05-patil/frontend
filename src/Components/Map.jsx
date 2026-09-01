@@ -11,6 +11,19 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
+// Amber pulsing location marker — the "you are here" instrument dot.
+const locationIcon = L.divIcon({
+  className: '',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  html: `
+    <div style="position: relative; width: 22px; height: 22px;">
+      <span style="position:absolute; inset:0; border-radius:9999px; background:rgba(232,163,61,0.35); animation:guardian-map-ping 1.8s ease-out infinite;"></span>
+      <span style="position:absolute; left:4px; top:4px; width:14px; height:14px; border-radius:9999px; border:2px solid #0B1220; background:#E8A33D;"></span>
+    </div>
+  `,
+});
+
 const TrackMeMap = () => {
   const [currentPosition, setCurrentPosition] = useState([19.0760, 72.8777]);
   const [isTracking, setIsTracking] = useState(false);
@@ -128,7 +141,7 @@ const TrackMeMap = () => {
           {isTracking ? 'Stop tracking' : 'Track me'}
         </button>
 
-        <div className="flex-1 min-h-[52vh] relative rounded-card overflow-hidden border border-slate-line">
+        <div className="flex-1 min-h-[52vh] relative rounded-card overflow-hidden border border-slate">
           <MapContainer
             center={currentPosition}
             zoom={15}
@@ -136,10 +149,10 @@ const TrackMeMap = () => {
             whenCreated={map => mapRef.current = map}
           >
             <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
             />
-            <Marker position={currentPosition}>
+            <Marker position={currentPosition} icon={locationIcon}>
               <Popup>You are here</Popup>
             </Marker>
           </MapContainer>

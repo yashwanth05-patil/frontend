@@ -22,11 +22,11 @@ function Testimony() {
     ];
 
     return (
-        <section className='w-full rounded-card bg-dusk-soft mb-8 overflow-hidden'>
+        <section className='w-full rounded-card bg-panel border border-slate mb-8 overflow-hidden'>
             <div className='w-full relative py-12'>
                 <div className='w-full px-4 md:px-6 z-10 relative'>
                     <p className='mono-readout text-center mb-2'>FIELD REPORTS</p>
-                    <h1 className='font-display text-display-sm text-center mb-8 text-ink'>What people notice</h1>
+                    <h1 className='font-display text-display-sm text-center mb-8 text-mist'>What people notice</h1>
                     <div className='flex flex-col gap-4 md:flex-row md:flex-wrap md:justify-center'>
                         {testimonials.map((testimonial, index) => (
                             <React.Fragment key={index}>

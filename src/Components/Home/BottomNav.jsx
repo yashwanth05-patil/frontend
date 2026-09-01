@@ -12,7 +12,7 @@ const items = [
 function BottomNav() {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center px-4">
-      <nav className="pointer-events-auto w-full max-w-md rounded-pill border border-slate-line bg-paper-raised/95 shadow-nav backdrop-blur-sm px-2 py-2">
+      <nav className="pointer-events-auto w-full max-w-md rounded-pill border border-slate bg-panel/95 shadow-nav backdrop-blur-sm px-2 py-2">
         <div className="flex items-center justify-between">
           {items.map(({ to, label, icon: Icon }) => (
             <NavLink
@@ -20,7 +20,7 @@ function BottomNav() {
               to={to}
               className={({ isActive }) =>
                 `flex min-h-touch min-w-touch flex-1 flex-col items-center justify-center gap-0.5 rounded-pill px-2 py-1 text-caption transition-colors duration-page ${
-                  isActive ? 'text-dusk bg-dusk-soft' : 'text-ink-soft hover:text-ink'
+                  isActive ? 'text-amber bg-amber-soft' : 'text-mist-soft hover:text-mist'
                 }`
               }
             >

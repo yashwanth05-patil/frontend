@@ -95,12 +95,12 @@ function Signup() {
     });
 
     return (
-        <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-paper p-4">
+        <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-ink p-4">
             <div className="w-full max-w-md">
                 <div className="mb-8 text-center">
                     <p className="mono-readout mb-3">CREATE ACCOUNT</p>
-                    <h1 className="font-display text-display-sm text-ink mb-2">Join your circle</h1>
-                    <p className="text-body text-ink-soft">Set up an account so someone can be reached if you need help.</p>
+                    <h1 className="font-display text-display-sm text-mist mb-2">Join your circle</h1>
+                    <p className="text-body text-mist-soft">Set up an account so someone can be reached if you need help.</p>
                 </div>
 
                 <form onSubmit={handleSubmit(Submit)} className="card-surface p-6 space-y-4">
@@ -115,13 +115,13 @@ function Signup() {
                     </button>
 
                     {errors && (
-                        <p className="text-caption text-dusk text-center">{errors}</p>
+                        <p className="text-caption text-amber text-center">{errors}</p>
                     )}
 
                     <div className="relative flex py-2 items-center">
-                        <div className="flex-grow border-t border-slate-line"></div>
-                        <span className="flex-shrink mx-4 text-caption text-ink-soft">or</span>
-                        <div className="flex-grow border-t border-slate-line"></div>
+                        <div className="flex-grow border-t border-slate"></div>
+                        <span className="flex-shrink mx-4 text-caption text-mist-soft">or</span>
+                        <div className="flex-grow border-t border-slate"></div>
                     </div>
 
                     <div>
@@ -171,7 +171,7 @@ function Signup() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-touch min-w-touch text-ink-soft"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-touch min-w-touch text-mist-soft"
                                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                             >
                                 {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
@@ -193,7 +193,7 @@ function Signup() {
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-touch min-w-touch text-ink-soft"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-touch min-w-touch text-mist-soft"
                                 aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                             >
                                 {showConfirmPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
@@ -205,16 +205,16 @@ function Signup() {
                         <input
                             type="checkbox"
                             id="agreeToTerms"
-                            className="mt-1 accent-dusk"
+                            className="mt-1 accent-amber"
                             {...register("agreeToTerms", {
                                 required: "You must agree to the Terms and Privacy Policy"
                             })}
                         />
-                        <label htmlFor="agreeToTerms" className="text-caption text-ink-soft">
+                        <label htmlFor="agreeToTerms" className="text-caption text-mist-soft">
                             I agree to the{' '}
-                            <a href="/terms" className="text-dusk">Terms of Service</a>
+                            <a href="/terms" className="text-amber">Terms of Service</a>
                             {' '}and{' '}
-                            <a href="/privacy" className="text-dusk">Privacy Policy</a>
+                            <a href="/privacy" className="text-amber">Privacy Policy</a>
                         </label>
                     </div>
 
@@ -222,9 +222,9 @@ function Signup() {
                         {isLoading ? 'Creating account…' : 'Create account'}
                     </button>
 
-                    <p className="text-center text-caption text-ink-soft">
+                    <p className="text-center text-caption text-mist-soft">
                         Already have an account?{' '}
-                        <Link to="/login" className="text-dusk font-medium">
+                        <Link to="/login" className="text-amber font-medium">
                             Sign in
                         </Link>
                     </p>

@@ -16,7 +16,7 @@ import 'react-toastify/dist/ReactToastify.css';
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-paper text-ink font-sans">
+      <div className="min-h-screen bg-ink text-mist font-sans">
         <div className="flex flex-col min-h-screen max-w-[85rem] mx-auto">
           <Navbar />
           <main className="flex-1">

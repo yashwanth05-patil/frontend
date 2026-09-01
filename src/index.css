@@ -4,11 +4,11 @@
 
 @layer base {
   html {
-    @apply bg-paper text-ink font-sans text-body antialiased;
+    @apply bg-ink text-mist font-sans text-body antialiased;
   }
 
   body {
-    @apply min-h-screen bg-paper text-ink;
+    @apply min-h-screen bg-ink text-mist;
   }
 
   *::-webkit-scrollbar {
@@ -22,39 +22,43 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 min-h-touch px-5 py-2.5 rounded-btn bg-dusk text-paper-raised text-body font-medium transition-opacity duration-page hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 min-h-touch px-5 py-2.5 rounded-btn bg-amber text-ink text-body font-medium transition-all duration-page ease-page hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 min-h-touch px-5 py-2.5 rounded-btn bg-paper-raised text-dusk text-body font-medium border-[1.5px] border-dusk transition-colors duration-page hover:bg-dusk-soft disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 min-h-touch px-5 py-2.5 rounded-btn bg-transparent text-mist text-body font-medium border-[1.5px] border-slate transition-colors duration-page ease-page hover:bg-panel hover:border-amber/60 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 min-h-touch min-w-touch px-3 py-2 rounded-btn text-ink-soft text-caption font-medium transition-colors duration-page hover:bg-slate-line hover:text-ink;
+    @apply inline-flex items-center justify-center gap-2 min-h-touch min-w-touch px-3 py-2 rounded-btn text-mist-soft text-caption font-medium transition-colors duration-page hover:bg-panel hover:text-mist;
   }
 
   .card-surface {
-    @apply bg-paper-raised border border-slate-line rounded-card;
+    @apply bg-panel border border-slate rounded-card;
   }
 
   .card-surface-press {
     @apply card-surface active:shadow-press;
   }
 
+  .panel-surface {
+    @apply bg-panel rounded-panel;
+  }
+
   .field-input {
-    @apply block w-full min-h-touch px-3 py-2.5 rounded-btn border border-slate bg-paper-raised text-ink text-body placeholder:text-ink-soft/60 focus:outline-none focus:border-dusk;
+    @apply block w-full min-h-touch px-3 py-2.5 rounded-card border border-slate bg-ink-raised text-mist text-body placeholder:text-mist-soft/50 focus:outline-none focus:border-amber transition-colors duration-page;
   }
 
   .field-label {
-    @apply block text-caption text-ink-soft mb-1.5;
+    @apply block text-caption text-mist-soft mb-1.5;
   }
 
   .badge-sage {
-    @apply inline-flex items-center rounded-pill px-3 py-1 text-caption text-sage bg-sage-soft;
+    @apply inline-flex items-center rounded-pill px-3 py-1 text-caption text-teal bg-teal-soft;
   }
 
   .badge-dusk {
-    @apply inline-flex items-center rounded-pill px-3 py-1 text-caption text-dusk bg-dusk-soft;
+    @apply inline-flex items-center rounded-pill px-3 py-1 text-caption text-amber bg-amber-soft;
   }
 
   .badge-signal {
@@ -62,11 +66,11 @@
   }
 
   .mono-readout {
-    @apply font-mono text-mono-data text-ink-soft tracking-[0.02em] uppercase;
+    @apply font-mono text-mono-data text-mist-soft tracking-[0.02em] uppercase;
   }
 
   .page-shell {
-    @apply w-full min-h-full bg-paper text-ink pb-28 px-4;
+    @apply w-full min-h-full bg-ink text-mist pb-28 px-4;
   }
 
   .page-shell-alert {
@@ -74,38 +78,51 @@
   }
 }
 
-/* Vigil Ring motion — personality budget lives here */
-@keyframes vigil-breathe {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+/* Guardian map ping — "you are here" instrument dot */
+@keyframes guardian-map-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  70%, 100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
-@keyframes vigil-quicken {
+/* Guardian Dial motion */
+@keyframes guardian-breathe {
   0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes guardian-arm {
+  0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
 
-@keyframes vigil-sonar {
+@keyframes guardian-pulse-once {
   0% {
     transform: scale(1);
     opacity: 0.55;
   }
   100% {
-    transform: scale(1.55);
+    transform: scale(1.5);
     opacity: 0;
   }
 }
 
 .vigil-breathe {
-  animation: vigil-breathe 4s ease-in-out infinite;
+  animation: guardian-breathe 4s ease-in-out infinite;
 }
 
 .vigil-quicken {
-  animation: vigil-quicken 1.5s ease-in-out infinite;
+  animation: guardian-arm 1.5s ease-in-out infinite;
 }
 
 .vigil-sonar {
-  animation: vigil-sonar 1.2s ease-out infinite;
+  animation: guardian-pulse-once 1.1s ease-out 1 forwards;
+  animation-fill-mode: forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -113,6 +130,6 @@
   .vigil-quicken,
   .vigil-sonar {
     animation: none;
-    opacity: 0.75;
+    opacity: 0.85;
   }
 }

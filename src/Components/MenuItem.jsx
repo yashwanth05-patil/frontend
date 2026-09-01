@@ -28,15 +28,15 @@ const MenuItem = ({
 
     return (
         <div className="w-full flex flex-col">
-            <div className="flex items-center gap-3 p-4 border-b border-slate-line last:border-none">
-                <Icon className="w-5 h-5 text-ink-soft" />
-                <span className="flex-1 text-left text-body text-ink">{label}</span>
+            <div className="flex items-center gap-3 p-4 border-b border-slate last:border-none">
+                <Icon className="w-5 h-5 text-mist-soft" />
+                <span className="flex-1 text-left text-body text-mist">{label}</span>
                 <div className="flex items-center gap-2">
                     {isEditing ? (
                         <>
                             <input
                                 className={`field-input py-1 text-caption ${
-                                    (error || validationError) ? 'border-dusk' : ''
+                                    (error || validationError) ? 'border-amber' : ''
                                 }`}
                                 value={value}
                                 onChange={(e) => {
@@ -67,18 +67,18 @@ const MenuItem = ({
                         <>
                             <button
                                 type="button"
-                                className={`text-caption ${error ? 'text-dusk' : 'text-ink-soft'}`}
+                                className={`text-caption ${error ? 'text-amber' : 'text-mist-soft'}`}
                                 onClick={() => !isLoading && setIsEditing(true)}
                             >
                                 {value || "Tap to edit"}
                             </button>
-                            <ChevronRight className="w-5 h-5 text-ink-soft" />
+                            <ChevronRight className="w-5 h-5 text-mist-soft" />
                         </>
                     )}
                 </div>
             </div>
             {(error || validationError) && (
-                <div className="px-4 py-1 text-caption text-dusk">
+                <div className="px-4 py-1 text-caption text-amber">
                     {error || validationError}
                 </div>
             )}

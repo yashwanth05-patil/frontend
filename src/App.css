@@ -1,10 +1,10 @@
 .Toastify__toast {
-  font-family: Inter, system-ui, sans-serif;
-  background: #FFFFFF;
-  color: #141A2E;
-  border: 1px solid #EFEDE6;
-  border-radius: 16px;
-  box-shadow: 0 8px 28px rgba(20, 26, 46, 0.10);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  background: #161F32;
+  color: #F5F7FB;
+  border: 1px solid #25314A;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
 }
 
 .Toastify__toast-body {
@@ -13,9 +13,10 @@
 }
 
 .Toastify__progress-bar {
-  background: #5B5F97;
+  background: #E8A33D;
 }
 
+/* Errors stay amber — red is reserved exclusively for live SOS */
 .Toastify__toast--error .Toastify__progress-bar {
-  background: #5B5F97;
+  background: #E8A33D;
 }
